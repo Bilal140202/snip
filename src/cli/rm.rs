@@ -1,4 +1,7 @@
+//! `snip rm` — Remove a snippet, with "did you mean?" on typos.
+
 use anyhow::{bail, Context, Result};
+use colored::Colorize;
 
 use crate::core::snipfile::{find_snipfile, read_snippets, write_snippets};
 
@@ -15,10 +18,20 @@ pub fn run(name: &str) -> Result<()> {
     match file.remove(name) {
         Some(_removed) => {
             write_snippets(&snipfile_path, &file)?;
-            println!("✓ Removed '{}' from .snips", name);
+            println!("✓ Removed '{}' from .snips", name.cyan());
             Ok(())
         }
-        None => bail!("Snippet '{}' not found", name),
+        None => {
+            // Try Levenshtein suggestion
+            let all_keys: Vec<String> = file.iter().map(|(k, _)| k.clone()).collect();
+            let suggestion = crate::cli::completions::suggest_similar(name, &all_keys);
+            if let Some(hint) = suggestion {
+                let msg = crate::cli::completions::did_you_mean(hint);
+                bail!("Snippet '{}' not found. {}", name, msg);
+            } else {
+                bail!("Snippet '{}' not found", name);
+            }
+        }
     }
 }
 

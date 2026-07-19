@@ -1,8 +1,9 @@
-name: CI
+name: CI/CD
 
 on:
   push:
     branches: [main, master]
+    tags: ["v*"]
   pull_request:
     branches: [main, master]
 
@@ -10,26 +11,145 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # ── Lint (fmt + clippy) ───────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: lint
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Clippy (all features)
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  # ── Test (cross-platform × toolchain) ─────────────────
   test:
-    name: Test (${{ matrix.os }})
+    name: Test ${{ matrix.os }} / rust ${{ matrix.rust }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: [stable]
+        rust: ["1.75.0", stable]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.os }}-rust-${{ matrix.rust }}
+      - name: Build
+        run: cargo build
+      - name: Run tests
+        run: cargo test
+
+  # ── Binary size gate (< 4 MiB) ────────────────────────
+  binary-size:
+    name: Binary size gate
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: binary-size
+      # Build without serde_yaml (detect-docker) to avoid potential
+      # cross-platform build issues and keep the size gate stable.
+      - name: Build release (no serde_yaml)
+        run: cargo build --release --no-default-features --features picker
+      - name: Check binary size
+        shell: bash
+        run: |
+          BINARY="target/release/snip"
+          SIZE=$(stat -c%s "$BINARY")
+          MAX=$((4 * 1024 * 1024))  # 4 MiB
+          echo "Binary size: $SIZE bytes ($(( SIZE / 1024 )) KiB)"
+          if [ "$SIZE" -gt "$MAX" ]; then
+            echo "::error::Binary size ${SIZE} bytes exceeds 4 MiB limit (${MAX} bytes)"
+            exit 1
+          fi
+          echo "::notice::Binary size ${SIZE} bytes is within the 4 MiB limit"
+
+  # ── Release builds (tag-triggered) ────────────────────
+  release-build:
+    name: Release build (${{ matrix.target }})
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: snip
+            asset: snip-x86_64-linux
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: snip
+            asset: snip-x86_64-macos
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: snip
+            asset: snip-aarch64-macos
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: snip.exe
+            asset: snip-x86_64-windows.exe
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: ${{ matrix.rust }}
-          components: rustfmt, clippy
+          targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-      - name: Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-      - name: Build
-        run: cargo build
-      - name: Test
-        run: cargo test
+        with:
+          key: release-${{ matrix.target }}
+      # Uses profile.release from Cargo.toml (LTO, strip, panic=abort, codegen-units=1)
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: target/${{ matrix.target }}/release/${{ matrix.artifact }}
+
+  # ── Publish GitHub Release ────────────────────────────
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [release-build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Flatten artifacts into dist/
+        run: |
+          mkdir -p dist
+          for dir in artifacts/*/; do
+            cp "$dir"* dist/ 2>/dev/null || true
+          done
+      - name: Generate SHA-256 checksums
+        working-directory: dist
+        run: |
+          sha256sum * > checksums-sha256.txt
+          echo "### SHA-256 Checksums"
+          echo '```'
+          cat checksums-sha256.txt
+          echo '```'
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

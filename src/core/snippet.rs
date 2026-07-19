@@ -216,6 +216,11 @@ impl SnipFile {
         self.entries.iter().find(|(k, _)| k == key).map(|(_, s)| s)
     }
 
+    /// Get a mutable reference to a snippet by fully-qualified key.
+    pub fn get_mut(&mut self, key: &str) -> Option<&mut Snippet> {
+        self.entries.iter_mut().find(|(k, _)| k == key).map(|(_, s)| s)
+    }
+
     /// Iterate over all entries as `&(String, Snippet)` pairs.
     pub fn iter(&self) -> impl Iterator<Item = &(String, Snippet)> {
         self.entries.iter()

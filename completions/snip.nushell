@@ -1,0 +1,19 @@
+# snip completions for Nushell
+extern "snip" [
+    _complete
+]
+
+# Complete subcommands and snippet names
+def "nu-complete snip" [] {
+    let commands = ["init" "add" "rm" "edit" "list" "run" "import" "doctor" "completions" "hook" "suggest" "explain" "stale" "setup"]
+    let snippets = (try { snip _complete snippets } | split row "\n")
+    $commands | append $snippets
+}
+
+def "nu-complete snip-snippets" [] {
+    try { snip _complete snippets } | split row "\n"
+}
+
+def "nu-complete snip-shells" [] {
+    ["bash" "zsh" "fish" "nushell" "elvish" "powershell"]
+}
