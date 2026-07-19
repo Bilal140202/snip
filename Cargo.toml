@@ -14,14 +14,27 @@ clap_complete = "4"
 toml = "0.8"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde_yaml = "0.9"
-crossterm = "0.28"
+serde_yaml = { version = "0.9", optional = true }
+crossterm = { version = "0.28", optional = true }
 fuzzy-matcher = "0.3"
 shell-words = "1"
-dirs = "6"
 colored = "3"
 anyhow = "1"
 which = "6"
+
+[features]
+default = ["detect-docker", "picker"]
+detect-docker = ["serde_yaml"]
+picker = ["crossterm"]
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+panic = "abort"
+codegen-units = 1
+
+rust-version = "1.75"
 
 [dev-dependencies]
 tempfile = "3"

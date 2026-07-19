@@ -3,6 +3,9 @@ use std::path::Path;
 
 use super::{DetectedSnippet, ProjectDetector};
 
+#[cfg(feature = "detect-docker")]
+use serde_yaml;
+
 /// Detects Docker projects by looking for `docker-compose.yml` or `docker-compose.yaml`.
 pub struct DockerDetector;
 

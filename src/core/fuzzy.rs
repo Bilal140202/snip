@@ -47,8 +47,8 @@ pub fn fuzzy_match(query: &str, keys: &[String]) -> Vec<FuzzyResult> {
 
 /// Find the single best fuzzy match. Returns `None` if nothing matches.
 pub fn fuzzy_best(query: &str, keys: &[String]) -> Option<String> {
-    let mut results = fuzzy_match(query, keys);
-    results.pop().map(|r| r.key)
+    let results = fuzzy_match(query, keys);
+    results.into_iter().next().map(|r| r.key)
 }
 
 #[cfg(test)]
