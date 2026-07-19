@@ -1,0 +1,29 @@
+[package]
+name = "snip"
+version = "0.1.0"
+edition = "2021"
+description = "Project-scoped command snippets with built-in fuzzy finder"
+license = "MIT"
+repository = "https://github.com/Bilal140202/snip"
+keywords = ["cli", "snippets", "commands", "fuzzy", "productivity"]
+categories = ["command-line-utilities", "development-tools"]
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+clap_complete = "4"
+toml = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+crossterm = "0.28"
+fuzzy-matcher = "0.3"
+shell-words = "1"
+dirs = "6"
+colored = "3"
+anyhow = "1"
+which = "6"
+
+[dev-dependencies]
+tempfile = "3"
+assert_cmd = "2"
+predicates = "3"

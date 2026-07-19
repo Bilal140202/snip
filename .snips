@@ -1,0 +1,23 @@
+[cargo.build]
+cmd = "cargo build"
+desc = "Build the project"
+
+[cargo.check]
+cmd = "cargo check"
+desc = "Type-check without building"
+
+[cargo.clippy]
+cmd = "cargo clippy"
+desc = "Run linter"
+
+[cargo.fmt]
+cmd = "cargo fmt"
+desc = "Format code"
+
+[cargo.run]
+cmd = "cargo run"
+desc = "Run the project"
+
+[cargo.test]
+cmd = "cargo test"
+desc = "Run tests"
