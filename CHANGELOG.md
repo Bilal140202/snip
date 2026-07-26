@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.3] - 2026-07-26
+
+### Fixed
+- **MSRV bump**: 1.78 → 1.85. The transitive dependency `home v0.5.12`
+  (pulled in via `which v6`) requires `edition2024`, which needs Rust 1.85+.
+  Updated the CI matrix to test on 1.85.0 instead of 1.78.0.
+- **Windows binary naming**: release workflow no longer produces
+  `snip-x86_64-windows.exe.exe` (double extension). The flatten step now
+  checks whether the asset name already ends in `.exe` before appending.
+
 ## [0.3.2] - 2026-07-26
 
 ### Changed
