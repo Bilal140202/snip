@@ -41,10 +41,10 @@ Three things make `snip` different:
 ### From crates.io (recommended)
 
 ```bash
-cargo install snipcmd
+cargo install snipit
 ```
 
-The package is published as `snipcmd` because `snip` was already taken
+The package is published as `snipit` because `snip` was already taken
 on crates.io. The binary is still installed as `snip`.
 
 ### From source

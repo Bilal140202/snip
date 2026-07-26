@@ -6,11 +6,11 @@
 use std::collections::HashMap;
 use std::fs;
 
-use snipcmd::core::fuzzy;
-use snipcmd::core::snipfile;
-use snipcmd::core::snippet::{SnipFile, Snippet, VarDef};
-use snipcmd::core::validator;
-use snipcmd::utils::shell;
+use snipit::core::fuzzy;
+use snipit::core::snipfile;
+use snipit::core::snippet::{SnipFile, Snippet, VarDef};
+use snipit::core::validator;
+use snipit::utils::shell;
 
 // ── TOML Parsing ───────────────────────────────────────────────────
 

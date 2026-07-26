@@ -1,6 +1,6 @@
 [package]
-name = "snipcmd"
-version = "0.3.4"
+name = "snipit"
+version = "0.3.5"
 edition = "2021"
 description = "Project-scoped command snippets with built-in fuzzy finder"
 license = "MIT"
@@ -12,7 +12,7 @@ keywords = ["cli", "snippets", "commands", "fuzzy", "productivity"]
 categories = ["command-line-utilities", "development-tools"]
 rust-version = "1.88"
 
-# The crate is published under `snipcmd` because `snip` is already taken
+# The crate is published under `snipit` because `snip` is already taken
 # on crates.io (by Daniel McGraw's "Text snippets on the command line").
 # The binary remains `snip` so all docs/usage stay the same.
 [[bin]]

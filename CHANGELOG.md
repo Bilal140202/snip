@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.5] - 2026-07-26
+
+### Changed
+- **Crate renamed to `snipit`** (from `snipcmd`). The crate name `snipit`
+  is shorter and more memorable than `snipcmd`. Both `snip` and `snipcmd`
+  alternatives were considered; `snipit` was chosen because `snip` was
+  already taken on crates.io.
+- Install command is now `cargo install snipit` (was `cargo install snipcmd`).
+- The `snipcmd` crate on crates.io (v0.3.4) has been yanked. Users who
+  installed via `cargo install snipcmd` should switch:
+  ```bash
+  cargo uninstall snipcmd
+  cargo install snipit
+  ```
+
 ## [0.3.4] - 2026-07-26
 
 ### Fixed
