@@ -7,7 +7,7 @@ license = "MIT"
 repository = "https://github.com/Bilal140202/snip"
 keywords = ["cli", "snippets", "commands", "fuzzy", "productivity"]
 categories = ["command-line-utilities", "development-tools"]
-rust-version = "1.75"
+rust-version = "1.78"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }

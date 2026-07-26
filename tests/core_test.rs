@@ -385,7 +385,12 @@ fn find_snipfile_in_cwd() {
     std::env::set_current_dir(tmp.path()).unwrap();
 
     let found = snipfile::find_snipfile(None).unwrap().unwrap();
-    assert_eq!(found, snipfile);
+    // On macOS, /var is symlinked to /private/var, so current_dir() returns
+    // the canonicalized path but tmp.path() doesn't. Canonicalize both
+    // before comparing.
+    let found_canon = std::fs::canonicalize(&found).unwrap_or(found.clone());
+    let snipfile_canon = std::fs::canonicalize(&snipfile).unwrap_or(snipfile.clone());
+    assert_eq!(found_canon, snipfile_canon);
 
     std::env::set_current_dir(&original).unwrap();
 }
