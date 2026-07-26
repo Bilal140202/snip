@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] - 2026-07-26
+
+### Fixed
+- **MSRV bump**: 1.85 → 1.88. The transitive dependency `home v0.5.12`
+  (pulled in via `which v6`) requires rustc 1.88. Updated the CI matrix
+  to test on 1.88.0.
+
 ## [0.3.3] - 2026-07-26
 
 ### Fixed
