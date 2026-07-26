@@ -64,7 +64,11 @@ mod tests {
     #[test]
     fn test_node_detect() {
         let tmp = tempfile::tempdir().unwrap();
-        fs::write(tmp.path().join("package.json"), r#"{"scripts":{"build":"tsc","test":"jest"}}"#).unwrap();
+        fs::write(
+            tmp.path().join("package.json"),
+            r#"{"scripts":{"build":"tsc","test":"jest"}}"#,
+        )
+        .unwrap();
 
         let detector = NodeDetector;
         assert!(detector.detect(tmp.path()));

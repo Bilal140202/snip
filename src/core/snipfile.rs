@@ -17,6 +17,46 @@ const SNIPFILE_NAME: &str = ".snips";
 const SNIPS_DIR_NAME: &str = ".snips.d";
 const CURRENT_FORMAT_VERSION: &str = "1.0";
 
+/// Return the path to the user's global snippets file.
+///
+/// Looks for `~/.config/snip/global.toml` first (XDG), then falls back to
+/// `~/.snips` (home directory). Returns `None` if neither exists and the
+/// home directory cannot be determined.
+pub fn global_snipfile_path() -> Option<PathBuf> {
+    // XDG: $XDG_CONFIG_HOME/snip/global.toml or ~/.config/snip/global.toml
+    if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
+        if !xdg.is_empty() {
+            let p = PathBuf::from(xdg).join("snip").join("global.toml");
+            if p.is_file() {
+                return Some(p);
+            }
+        }
+    }
+    if let Some(home) = std::env::var_os("HOME") {
+        let xdg_default = PathBuf::from(&home)
+            .join(".config")
+            .join("snip")
+            .join("global.toml");
+        if xdg_default.is_file() {
+            return Some(xdg_default);
+        }
+        let legacy = PathBuf::from(&home).join(".snips");
+        if legacy.is_file() {
+            return Some(legacy);
+        }
+    }
+    None
+}
+
+/// Read snippets from the global file (if any). Returns an empty `SnipFile`
+/// when none exists — never errors on missing file.
+pub fn read_global_snippets() -> SnipFile {
+    match global_snipfile_path() {
+        Some(p) => read_single_snipfile(&p).unwrap_or_default(),
+        None => SnipFile::new(),
+    }
+}
+
 /// Walk up from the given start directory (or cwd) looking for a `.snips` file.
 ///
 /// Returns `Ok(Some(path))` if found, `Ok(None)` if not found.
@@ -73,13 +113,18 @@ fn read_single_snipfile(path: &Path) -> Result<SnipFile> {
 /// Read all snippets from the primary `.snips` file merged with `.snips.d/` directory.
 ///
 /// The merge chain (later entries override earlier ones):
-/// 1. `.snips.d/*.toml` files (sorted alphabetically, except `_local.toml` which has highest priority)
-/// 2. `.snips` (main file — overrides everything in `.snips.d/`)
-/// 3. `.snips.d/_local.toml` (local overrides — never committed, highest priority)
+/// 1. **Global file** (`~/.config/snip/global.toml` or `~/.snips`) — lowest priority
+/// 2. `.snips.d/*.toml` files (sorted alphabetically, except `_local.toml` which has highest priority)
+/// 3. `.snips` (main file — overrides everything in `.snips.d/`)
+/// 4. `.snips.d/_local.toml` (local overrides — never committed, highest priority)
 pub fn read_all_snippets(root: &Path) -> Result<SnipFile> {
     let mut merged = SnipFile::new();
     let snips_path = root.join(SNIPFILE_NAME);
     let snips_dir = root.join(SNIPS_DIR_NAME);
+
+    // Step 0: Read global snippets (lowest priority)
+    let global = read_global_snippets();
+    merge_snipfile(&mut merged, global);
 
     // Step 1: Read .snips.d/*.toml (sorted, excluding _local.toml)
     if snips_dir.is_dir() {
@@ -88,7 +133,7 @@ pub fn read_all_snippets(root: &Path) -> Result<SnipFile> {
             .filter_map(|entry| {
                 let entry = entry.ok()?;
                 let path = entry.path();
-                if path.extension().map_or(false, |ext| ext == "toml") {
+                if path.extension().is_some_and(|ext| ext == "toml") {
                     let name = path.file_name()?.to_string_lossy().to_string();
                     // _local.toml is handled last
                     if !name.starts_with('_') {
@@ -148,8 +193,8 @@ pub fn write_snippets(path: &Path, data: &SnipFile) -> Result<()> {
         );
     }
 
-    let toml_str = toml::to_string_pretty(&toml_value)
-        .context("failed to serialize .snips data to TOML")?;
+    let toml_str =
+        toml::to_string_pretty(&toml_value).context("failed to serialize .snips data to TOML")?;
 
     // Ensure parent directory exists.
     if let Some(parent) = path.parent() {
@@ -197,12 +242,7 @@ pub fn is_current_format(path: &Path) -> bool {
 ///
 /// If the file doesn't exist, it is created. If the key already exists, the
 /// snippet is replaced.
-pub fn add_snippet(
-    path: &Path,
-    section: &str,
-    name: &str,
-    snippet: Snippet,
-) -> Result<()> {
+pub fn add_snippet(path: &Path, section: &str, name: &str, snippet: Snippet) -> Result<()> {
     let mut file = if path.exists() {
         read_snippets(path)?
     } else {
@@ -260,7 +300,7 @@ pub fn list_snippets(file: &SnipFile) -> Vec<(&str, &str, &Snippet)> {
 }
 
 /// Resolve a short-form key to a fully-qualified key.
-pub fn resolve_key<'a>(file: &'a SnipFile, input: &str) -> Option<String> {
+pub fn resolve_key(file: &SnipFile, input: &str) -> Option<String> {
     // Exact match first.
     if file.get(input).is_some() {
         return Some(input.to_string());
@@ -303,7 +343,7 @@ pub fn list_snips_d_files(root: &Path) -> Result<Vec<PathBuf>> {
         .filter_map(|entry| {
             let entry = entry.ok()?;
             let path = entry.path();
-            if path.extension().map_or(false, |ext| ext == "toml") {
+            if path.extension().is_some_and(|ext| ext == "toml") {
                 Some(path)
             } else {
                 None
@@ -356,7 +396,11 @@ mod tests {
     fn read_format_version_works() {
         let tmp = tempfile::tempdir().unwrap();
         let snipfile = tmp.path().join(".snips");
-        fs::write(&snipfile, "format = \"1.0\"\n\n[hello]\ncmd = \"echo hello\"\n").unwrap();
+        fs::write(
+            &snipfile,
+            "format = \"1.0\"\n\n[hello]\ncmd = \"echo hello\"\n",
+        )
+        .unwrap();
 
         assert_eq!(read_format_version(&snipfile), Some("1.0".to_string()));
         assert!(is_current_format(&snipfile));
@@ -370,18 +414,10 @@ mod tests {
         // Create .snips.d/ with a file
         let dir = root.join(".snips.d");
         fs::create_dir_all(&dir).unwrap();
-        fs::write(
-            dir.join("common.toml"),
-            "[build]\ncmd = \"make build\"\n",
-        )
-        .unwrap();
+        fs::write(dir.join("common.toml"), "[build]\ncmd = \"make build\"\n").unwrap();
 
         // Create main .snips
-        fs::write(
-            root.join(".snips"),
-            "[test]\ncmd = \"make test\"\n",
-        )
-        .unwrap();
+        fs::write(root.join(".snips"), "[test]\ncmd = \"make test\"\n").unwrap();
 
         let merged = read_all_snippets(root).unwrap();
         assert_eq!(merged.len(), 2);
@@ -395,11 +431,7 @@ mod tests {
         let root = tmp.path();
 
         // Main .snips
-        fs::write(
-            root.join(".snips"),
-            "[build]\ncmd = \"make build\"\n",
-        )
-        .unwrap();
+        fs::write(root.join(".snips"), "[build]\ncmd = \"make build\"\n").unwrap();
 
         // _local.toml overrides
         let dir = root.join(".snips.d");

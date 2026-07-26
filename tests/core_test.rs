@@ -7,8 +7,8 @@ use std::collections::HashMap;
 use std::fs;
 
 use snip::core::fuzzy;
-use snip::core::snippet::{SnipFile, Snippet, VarDef};
 use snip::core::snipfile;
+use snip::core::snippet::{SnipFile, Snippet, VarDef};
 use snip::core::validator;
 use snip::utils::shell;
 
@@ -87,15 +87,9 @@ fn write_and_read_back() {
     let read_back = snipfile::read_snippets(&path).unwrap();
 
     assert_eq!(read_back.len(), 2);
-    assert_eq!(
-        read_back.get("build").unwrap().cmd,
-        "cargo build --release"
-    );
+    assert_eq!(read_back.get("build").unwrap().cmd, "cargo build --release");
     assert_eq!(read_back.get("test").unwrap().cmd, "cargo test --all");
-    assert_eq!(
-        read_back.get("build").unwrap().desc,
-        "Release build"
-    );
+    assert_eq!(read_back.get("build").unwrap().desc, "Release build");
 }
 
 #[test]
@@ -286,7 +280,10 @@ fn shell_parse_double_quotes() {
 #[test]
 fn shell_parse_pipes() {
     let tokens = shell::parse_command("echo hello | grep hello | wc -l");
-    assert_eq!(tokens, vec!["echo", "hello", "|", "grep", "hello", "|", "wc", "-l"]);
+    assert_eq!(
+        tokens,
+        vec!["echo", "hello", "|", "grep", "hello", "|", "wc", "-l"]
+    );
 }
 
 #[test]
@@ -329,10 +326,7 @@ fn substitute_multiple_vars() {
     let mut vars = HashMap::new();
     vars.insert("env".to_string(), "prod".to_string());
     vars.insert("region".to_string(), "us-east-1".to_string());
-    assert_eq!(
-        s.substitute(&vars),
-        "deploy --env prod --region us-east-1"
-    );
+    assert_eq!(s.substitute(&vars), "deploy --env prod --region us-east-1");
 }
 
 #[test]
@@ -406,7 +400,9 @@ fn validation_empty_command() {
         f.insert("bad", s);
         f
     });
-    assert!(issues.iter().any(|i| i.severity == validator::Severity::Error));
+    assert!(issues
+        .iter()
+        .any(|i| i.severity == validator::Severity::Error));
 }
 
 #[test]
@@ -415,7 +411,9 @@ fn validation_undefined_variable() {
     let mut f = SnipFile::new();
     f.insert("tpl", s);
     let issues = validator::validate(&f);
-    assert!(issues.iter().any(|i| i.message.contains("undefined variable")));
+    assert!(issues
+        .iter()
+        .any(|i| i.message.contains("undefined variable")));
 }
 
 #[test]
@@ -445,11 +443,8 @@ fn full_roundtrip_write_read_compare() {
     );
     original.insert(
         "deploy",
-        Snippet::new("deploy --env {{env}}").with_vars(vec![VarDef::new(
-            "env",
-            "Environment",
-        )
-        .with_options(vec!["staging".to_string(), "production".to_string()])]),
+        Snippet::new("deploy --env {{env}}").with_vars(vec![VarDef::new("env", "Environment")
+            .with_options(vec!["staging".to_string(), "production".to_string()])]),
     );
     original.insert(
         "lint",

@@ -72,8 +72,14 @@ pub fn doctor(file: &SnipFile) -> Result<()> {
         return Ok(());
     }
 
-    let errors = issues.iter().filter(|i| i.severity == Severity::Error).count();
-    let warnings = issues.iter().filter(|i| i.severity == Severity::Warning).count();
+    let errors = issues
+        .iter()
+        .filter(|i| i.severity == Severity::Error)
+        .count();
+    let warnings = issues
+        .iter()
+        .filter(|i| i.severity == Severity::Warning)
+        .count();
 
     for issue in &issues {
         let icon = match issue.severity {
@@ -83,10 +89,7 @@ pub fn doctor(file: &SnipFile) -> Result<()> {
         eprintln!("  {} [{}] {}", icon, issue.key, issue.message);
     }
 
-    eprintln!(
-        "\n{} error(s), {} warning(s)",
-        errors, warnings
-    );
+    eprintln!("\n{} error(s), {} warning(s)", errors, warnings);
 
     if errors > 0 {
         anyhow::bail!("validation failed with {} error(s)", errors);
@@ -96,8 +99,8 @@ pub fn doctor(file: &SnipFile) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::snippet::{Snippet, VarDef};
+    use super::*;
 
     #[test]
     fn empty_command_is_error() {
@@ -120,14 +123,19 @@ mod tests {
         let mut file = SnipFile::new();
         file.insert("tpl", Snippet::new("deploy --env {{env}}"));
         let issues = validate(&file);
-        assert!(issues.iter().any(|i| i.message.contains("undefined variable")));
+        assert!(issues
+            .iter()
+            .any(|i| i.message.contains("undefined variable")));
     }
 
     #[test]
     fn defined_variable_matches_placeholder() {
         let mut file = SnipFile::new();
         let var = VarDef::new("env", "Deployment environment");
-        file.insert("tpl", Snippet::new("deploy --env {{env}}").with_vars(vec![var]));
+        file.insert(
+            "tpl",
+            Snippet::new("deploy --env {{env}}").with_vars(vec![var]),
+        );
         let issues = validate(&file);
         assert!(issues.is_empty());
     }

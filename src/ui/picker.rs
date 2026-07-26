@@ -160,10 +160,8 @@ fn pick_builtin(items: &[PickerItem]) -> Result<PickerResult> {
                     KeyCode::Up => {
                         cursor = cursor.saturating_sub(1);
                     }
-                    KeyCode::Down => {
-                        if cursor < filtered.len().saturating_sub(1) {
-                            cursor += 1;
-                        }
+                    KeyCode::Down if cursor < filtered.len().saturating_sub(1) => {
+                        cursor += 1;
                     }
                     _ => {}
                 }
@@ -179,15 +177,11 @@ fn pick_builtin(items: &[PickerItem]) -> Result<PickerResult> {
 
 #[cfg(feature = "picker")]
 fn render_builtin_ui(query: &str, items: &[&PickerItem], cursor: usize) {
-    use crossterm::terminal::Clear;
     use crossterm::cursor::MoveTo;
+    use crossterm::terminal::Clear;
 
     let mut stdout = io::stdout().lock();
-    let _ = crossterm::execute!(
-        stdout,
-        Clear(ClearType::All),
-        MoveTo(0, 0)
-    );
+    let _ = crossterm::execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
 
     let _ = writeln!(stdout, "{}> {}", ">".cyan(), query);
 
@@ -195,9 +189,12 @@ fn render_builtin_ui(query: &str, items: &[&PickerItem], cursor: usize) {
     let start = cursor.saturating_sub(3);
     let end = (start + visible_count).min(items.len());
 
-    for (i, idx) in (start..end).enumerate() {
-        let item = &items[idx];
-        let marker = if idx == cursor { "❯".green().to_string() } else { " ".to_string() };
+    for (idx, item) in items.iter().enumerate().skip(start).take(end - start) {
+        let marker = if idx == cursor {
+            "❯".green().to_string()
+        } else {
+            " ".to_string()
+        };
         let key = if idx == cursor {
             item.key.green().bold().to_string()
         } else {
@@ -235,7 +232,10 @@ fn pick_fallback(items: &[PickerItem]) -> Result<PickerResult> {
         };
         println!("  {} — {}", item.key.green().bold(), desc);
     }
-    println!("\n  {}", "Install fzf for interactive selection: https://github.com/junegunn/fzf".dimmed());
+    println!(
+        "\n  {}",
+        "Install fzf for interactive selection: https://github.com/junegunn/fzf".dimmed()
+    );
     Ok(PickerResult::Cancelled)
 }
 
@@ -257,10 +257,10 @@ fn is_stdout_tty() -> bool {
 // Thin wrappers to avoid re-exporting crossterm event types directly.
 #[cfg(feature = "picker")]
 mod event_shim {
-    pub use crossterm::event::{KeyCode, read as read_key, Event};
+    pub use crossterm::event::{read as read_key, Event, KeyCode};
 }
 
 #[cfg(feature = "picker")]
-use event_shim::{Event, KeyCode, read_key};
+use event_shim::{read_key, Event, KeyCode};
 
 use crossterm::terminal::ClearType;

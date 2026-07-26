@@ -238,18 +238,13 @@ pub fn parse_history(path: &Path) -> Result<Vec<HistoryEntry>> {
 
 /// Commands that are too trivial to suggest as snippets.
 const BUILTIN_BLACKLIST: &[&str] = &[
-    "ls", "cd", "pwd", "echo", "clear", "exit", "history", "man", "which",
-    "whoami", "date", "uname", "uptime", "cat", "less", "more", "head",
-    "tail", "wc", "sort", "uniq", "tr", "cut", "tee", "xargs",
-    "true", "false", "test", "type", "source", "alias", "unalias",
-    "export", "unset", "set", "env", "printenv", "read", "declare",
-    "local", "return", "shift", "wait", "sleep", "logout", "resize",
-    "reset", "bindkey", "bg", "fg", "jobs", "disown", "kill", "trap",
-    "dirs", "pushd", "popd", "hash", "builtin", "command", "exec",
-    "shopt", "setopt", "opt", "compinit", "compdef",
-    "vim", "vi", "nano", "emacs", "code",
-    "ssh", "scp", "sftp",
-    "snip",
+    "ls", "cd", "pwd", "echo", "clear", "exit", "history", "man", "which", "whoami", "date",
+    "uname", "uptime", "cat", "less", "more", "head", "tail", "wc", "sort", "uniq", "tr", "cut",
+    "tee", "xargs", "true", "false", "test", "type", "source", "alias", "unalias", "export",
+    "unset", "set", "env", "printenv", "read", "declare", "local", "return", "shift", "wait",
+    "sleep", "logout", "resize", "reset", "bindkey", "bg", "fg", "jobs", "disown", "kill", "trap",
+    "dirs", "pushd", "popd", "hash", "builtin", "command", "exec", "shopt", "setopt", "opt",
+    "compinit", "compdef", "vim", "vi", "nano", "emacs", "code", "ssh", "scp", "sftp", "snip",
 ];
 
 /// Check if a command should be filtered out.
@@ -296,7 +291,7 @@ fn should_filter(cmd: &str) -> bool {
 /// This strips arguments that vary between runs, keeping only the
 /// structural parts of the command.
 fn base_command_key(cmd: &str) -> String {
-    let parts: Vec<&str> = cmd.trim().split_whitespace().collect();
+    let parts: Vec<&str> = cmd.split_whitespace().collect();
     if parts.is_empty() {
         return String::new();
     }
@@ -308,11 +303,35 @@ fn base_command_key(cmd: &str) -> String {
 
     // For known subcommand-based tools, include the subcommand but strip flags
     let subcommand_tools = [
-        "cargo", "npm", "yarn", "pnpm", "docker", "kubectl", "git",
-        "go", "pip", "pip3", "poetry", "npm", "npx", "yarn",
-        "bundle", "rake", "rails", "make", "cmake",
-        "terraform", "ansible-playbook", "aws", "gcloud", "az",
-        "pytest", "jest", "mocha", "vitest", "cargo",
+        "cargo",
+        "npm",
+        "yarn",
+        "pnpm",
+        "docker",
+        "kubectl",
+        "git",
+        "go",
+        "pip",
+        "pip3",
+        "poetry",
+        "npm",
+        "npx",
+        "yarn",
+        "bundle",
+        "rake",
+        "rails",
+        "make",
+        "cmake",
+        "terraform",
+        "ansible-playbook",
+        "aws",
+        "gcloud",
+        "az",
+        "pytest",
+        "jest",
+        "mocha",
+        "vitest",
+        "cargo",
     ];
 
     let base = parts[0].rsplit('/').next().unwrap_or(parts[0]);
@@ -606,12 +625,36 @@ mod tests {
     fn test_suggest_from_history_basic() {
         let now = 1700000000;
         let entries = vec![
-            HistoryEntry { cmd: "cargo build --release".to_string(), timestamp: Some(now - 86400), count: 1 },
-            HistoryEntry { cmd: "cargo build --release".to_string(), timestamp: Some(now - 2 * 86400), count: 1 },
-            HistoryEntry { cmd: "cargo build --release".to_string(), timestamp: Some(now - 3 * 86400), count: 1 },
-            HistoryEntry { cmd: "cargo test -- --nocapture".to_string(), timestamp: Some(now - 86400), count: 1 },
-            HistoryEntry { cmd: "ls".to_string(), timestamp: Some(now), count: 5 },
-            HistoryEntry { cmd: "git log | head -20".to_string(), timestamp: Some(now), count: 10 },
+            HistoryEntry {
+                cmd: "cargo build --release".to_string(),
+                timestamp: Some(now - 86400),
+                count: 1,
+            },
+            HistoryEntry {
+                cmd: "cargo build --release".to_string(),
+                timestamp: Some(now - 2 * 86400),
+                count: 1,
+            },
+            HistoryEntry {
+                cmd: "cargo build --release".to_string(),
+                timestamp: Some(now - 3 * 86400),
+                count: 1,
+            },
+            HistoryEntry {
+                cmd: "cargo test -- --nocapture".to_string(),
+                timestamp: Some(now - 86400),
+                count: 1,
+            },
+            HistoryEntry {
+                cmd: "ls".to_string(),
+                timestamp: Some(now),
+                count: 5,
+            },
+            HistoryEntry {
+                cmd: "git log | head -20".to_string(),
+                timestamp: Some(now),
+                count: 10,
+            },
         ];
 
         let existing = crate::core::snippet::SnipFile::new();
@@ -635,8 +678,16 @@ mod tests {
     fn test_suggest_excludes_existing() {
         let now = 1700000000;
         let entries = vec![
-            HistoryEntry { cmd: "cargo build --release".to_string(), timestamp: Some(now), count: 5 },
-            HistoryEntry { cmd: "cargo test -- --nocapture".to_string(), timestamp: Some(now), count: 3 },
+            HistoryEntry {
+                cmd: "cargo build --release".to_string(),
+                timestamp: Some(now),
+                count: 5,
+            },
+            HistoryEntry {
+                cmd: "cargo test -- --nocapture".to_string(),
+                timestamp: Some(now),
+                count: 3,
+            },
         ];
 
         let mut existing = crate::core::snippet::SnipFile::new();
@@ -676,11 +727,27 @@ mod tests {
         let now = 1700000000;
         let entries = vec![
             // Old command run once
-            HistoryEntry { cmd: "docker compose up --build".to_string(), timestamp: Some(now - 60 * 86400), count: 1 },
+            HistoryEntry {
+                cmd: "docker compose up --build".to_string(),
+                timestamp: Some(now - 60 * 86400),
+                count: 1,
+            },
             // Recent command run 3 times
-            HistoryEntry { cmd: "cargo build --release".to_string(), timestamp: Some(now - 86400), count: 1 },
-            HistoryEntry { cmd: "cargo build --release".to_string(), timestamp: Some(now - 2 * 86400), count: 1 },
-            HistoryEntry { cmd: "cargo build --release".to_string(), timestamp: Some(now - 3 * 86400), count: 1 },
+            HistoryEntry {
+                cmd: "cargo build --release".to_string(),
+                timestamp: Some(now - 86400),
+                count: 1,
+            },
+            HistoryEntry {
+                cmd: "cargo build --release".to_string(),
+                timestamp: Some(now - 2 * 86400),
+                count: 1,
+            },
+            HistoryEntry {
+                cmd: "cargo build --release".to_string(),
+                timestamp: Some(now - 3 * 86400),
+                count: 1,
+            },
         ];
 
         let existing = crate::core::snippet::SnipFile::new();

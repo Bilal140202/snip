@@ -4,7 +4,7 @@
 //! where shell completion scripts call `snip _complete <kind> [partial]` to get
 //! candidate snippet names from the current project's .snips file.
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use colored::Colorize;
 
 use crate::core::snipfile::find_snipfile;
@@ -51,9 +51,20 @@ fn complete_snippets(partial: Option<&str>) -> Result<()> {
 /// Print available subcommands, optionally filtered by a partial prefix.
 fn complete_subcommands(partial: Option<&str>) -> Result<()> {
     let subcommands = [
-        "init", "add", "rm", "edit", "list", "run",
-        "import", "doctor", "completions", "hook",
-        "suggest", "explain", "stale", "setup",
+        "init",
+        "add",
+        "rm",
+        "edit",
+        "list",
+        "run",
+        "import",
+        "doctor",
+        "completions",
+        "hook",
+        "suggest",
+        "explain",
+        "stale",
+        "setup",
     ];
 
     for cmd in &subcommands {
@@ -140,11 +151,11 @@ pub fn levenshtein(a: &str, b: &str) -> usize {
 
     let mut matrix = vec![vec![0; b_len + 1]; a_len + 1];
 
-    for i in 0..=a_len {
-        matrix[i][0] = i;
+    for (i, row) in matrix.iter_mut().enumerate() {
+        row[0] = i;
     }
-    for j in 0..=b_len {
-        matrix[0][j] = j;
+    for (j, val) in matrix[0].iter_mut().enumerate() {
+        *val = j;
     }
 
     for (i, ca) in a.chars().enumerate() {
@@ -173,10 +184,8 @@ pub fn suggest_similar<'a>(query: &str, candidates: &'a [String]) -> Option<&'a 
 
     for candidate in candidates {
         let dist = levenshtein(query, candidate);
-        if dist <= threshold {
-            if best.is_none() || dist < best.unwrap().1 {
-                best = Some((candidate, dist));
-            }
+        if dist <= threshold && (best.is_none() || dist < best.unwrap().1) {
+            best = Some((candidate, dist));
         }
     }
 
@@ -185,7 +194,11 @@ pub fn suggest_similar<'a>(query: &str, candidates: &'a [String]) -> Option<&'a 
 
 /// Format a "did you mean?" suggestion.
 pub fn did_you_mean(suggestion: &str) -> String {
-    format!("{} Did you mean {}?", "hint:".yellow().bold(), suggestion.cyan().bold())
+    format!(
+        "{} Did you mean {}?",
+        "hint:".yellow().bold(),
+        suggestion.cyan().bold()
+    )
 }
 
 #[cfg(test)]
@@ -210,11 +223,7 @@ mod tests {
 
     #[test]
     fn suggest_finds_close_match() {
-        let candidates = vec![
-            "build".into(),
-            "build.release".into(),
-            "test".into(),
-        ];
+        let candidates = vec!["build".into(), "build.release".into(), "test".into()];
         assert_eq!(suggest_similar("buld", &candidates), Some("build"));
     }
 

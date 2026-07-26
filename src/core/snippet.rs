@@ -218,7 +218,10 @@ impl SnipFile {
 
     /// Get a mutable reference to a snippet by fully-qualified key.
     pub fn get_mut(&mut self, key: &str) -> Option<&mut Snippet> {
-        self.entries.iter_mut().find(|(k, _)| k == key).map(|(_, s)| s)
+        self.entries
+            .iter_mut()
+            .find(|(k, _)| k == key)
+            .map(|(_, s)| s)
     }
 
     /// Iterate over all entries as `&(String, Snippet)` pairs.
@@ -419,10 +422,7 @@ mod tests {
     #[test]
     fn to_toml_value_nested_key() {
         let mut file = SnipFile::new();
-        file.insert(
-            "build.release",
-            Snippet::new("cargo build --release"),
-        );
+        file.insert("build.release", Snippet::new("cargo build --release"));
         let val = file.to_toml_value();
         let toml_str = toml::to_string_pretty(&val).unwrap();
         assert!(toml_str.contains("[build.release]"));
@@ -449,8 +449,14 @@ desc = "Deploy to staging"
 
         assert_eq!(file.len(), 3);
         assert_eq!(file.get("build").unwrap().cmd, "cargo build");
-        assert_eq!(file.get("build.release").unwrap().cmd, "cargo build --release");
-        assert_eq!(file.get("deploy.staging").unwrap().cmd, "deploy --env staging");
+        assert_eq!(
+            file.get("build.release").unwrap().cmd,
+            "cargo build --release"
+        );
+        assert_eq!(
+            file.get("deploy.staging").unwrap().cmd,
+            "deploy --env staging"
+        );
     }
 
     #[test]

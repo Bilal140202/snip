@@ -26,9 +26,7 @@ pub fn run(name_or_cmd: &str) -> Result<()> {
         let all_keys: Vec<String> = file.iter().map(|(k, _)| k.clone()).collect();
         let matches = fuzzy::fuzzy_match(name_or_cmd, &all_keys);
 
-        if !matches.is_empty()
-            && (matches.len() == 1 || matches[0].score > matches[1].score * 2)
-        {
+        if !matches.is_empty() && (matches.len() == 1 || matches[0].score > matches[1].score * 2) {
             let key = &matches[0].key;
             let snippet = file.get(key).unwrap();
             return explain_snippet(key, snippet);
@@ -47,11 +45,7 @@ fn explain_snippet(name: &str, snippet: &crate::core::snippet::Snippet) -> Resul
     println!();
 
     // Command line
-    println!(
-        "{} {}",
-        "Command:".bold(),
-        snippet.cmd.cyan()
-    );
+    println!("{} {}", "Command:".bold(), snippet.cmd.cyan());
     println!("{}", "─".repeat(50).dimmed());
     println!();
 
@@ -59,12 +53,20 @@ fn explain_snippet(name: &str, snippet: &crate::core::snippet::Snippet) -> Resul
     if !snippet.vars.is_empty() {
         println!("{}", "Variables:".bold().yellow());
         for var in &snippet.vars {
-            println!("  {} {}", format!("{{{{{}}}}}", var.name).cyan(), format!("— {}", var.desc).dimmed());
+            println!(
+                "  {} {}",
+                format!("{{{{{}}}}}", var.name).cyan(),
+                format!("— {}", var.desc).dimmed()
+            );
             if let Some(ref default) = var.default {
                 println!("    {} {}", "default:".dimmed(), default.green());
             }
             if !var.options.is_empty() {
-                println!("    {} {}", "options:".dimmed(), var.options.join(", ").dimmed());
+                println!(
+                    "    {} {}",
+                    "options:".dimmed(),
+                    var.options.join(", ").dimmed()
+                );
             }
         }
         println!();
@@ -88,7 +90,9 @@ fn explain_snippet(name: &str, snippet: &crate::core::snippet::Snippet) -> Resul
             let seg_parts = explain_command(&segment.command);
             println!(
                 "  {} {}",
-                format!("Segment {}:", segment.position + 1).bold().magenta(),
+                format!("Segment {}:", segment.position + 1)
+                    .bold()
+                    .magenta(),
                 segment.command.cyan()
             );
             for part in &seg_parts {
@@ -131,7 +135,9 @@ fn explain_raw(cmd: &str) -> Result<()> {
             let seg_parts = explain_command(&segment.command);
             println!(
                 "  {} {}",
-                format!("Segment {}:", segment.position + 1).bold().magenta(),
+                format!("Segment {}:", segment.position + 1)
+                    .bold()
+                    .magenta(),
                 segment.command.cyan()
             );
             for part in &seg_parts {
@@ -197,9 +203,6 @@ fn color_token(part: &crate::core::explainer::ExplanationPart) -> (String, &Toke
 /// Get the display width of a token (without ANSI codes).
 fn token_display_width(token: &str) -> usize {
     // Strip ANSI escape sequences for width calculation
-    let stripped: String = token
-        .chars()
-        .filter(|c| !c.is_ascii_control())
-        .collect();
+    let stripped: String = token.chars().filter(|c| !c.is_ascii_control()).collect();
     stripped.len()
 }

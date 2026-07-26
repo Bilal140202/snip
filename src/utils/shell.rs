@@ -1,5 +1,4 @@
 /// Shell-related utilities.
-
 use std::process::Command;
 
 /// Return the user's `$SHELL` environment variable, falling back to `"sh"`.

@@ -4,8 +4,8 @@ use std::path::Path;
 use anyhow::{Context, Result};
 
 use crate::core::detector;
-use crate::core::snippet::{Snippet, SnipFile};
 use crate::core::snipfile::write_snippets;
+use crate::core::snippet::{SnipFile, Snippet};
 
 /// Run `snip init` — detect project type and create `.snips` file.
 pub fn run() -> Result<()> {
@@ -47,10 +47,7 @@ fn run_at(root: &Path) -> Result<()> {
         } else {
             format!("{}.{}", section, name)
         };
-        file.insert(
-            key,
-            Snippet::new(cmd.as_str()).with_desc(desc.as_str()),
-        );
+        file.insert(key, Snippet::new(cmd.as_str()).with_desc(desc.as_str()));
     }
 
     write_snippets(&snipfile_path, &file)?;

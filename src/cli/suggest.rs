@@ -4,8 +4,8 @@ use anyhow::{Context, Result};
 use colored::Colorize;
 
 use crate::core::history::{detect_history_path, parse_history, suggest_from_history, Suggestion};
-use crate::core::snippet::{Snippet, SnipFile};
 use crate::core::snipfile::{find_snipfile, read_snippets, write_snippets};
+use crate::core::snippet::{SnipFile, Snippet};
 
 /// Default number of suggestions to show.
 const DEFAULT_LIMIT: usize = 10;
@@ -46,8 +46,14 @@ pub fn run(show_all: bool, add_count: Option<usize>) -> Result<()> {
     let suggestions = suggest_from_history(&entries, &existing, limit);
 
     if suggestions.is_empty() {
-        println!("{}", "No good snippet candidates found in history.".dimmed());
-        println!("Try running more commands, or use {} to add snippets manually.", "snip add".cyan());
+        println!(
+            "{}",
+            "No good snippet candidates found in history.".dimmed()
+        );
+        println!(
+            "Try running more commands, or use {} to add snippets manually.",
+            "snip add".cyan()
+        );
         return Ok(());
     }
 
@@ -66,7 +72,11 @@ pub fn run(show_all: bool, add_count: Option<usize>) -> Result<()> {
     println!();
 
     for s in suggestions.iter() {
-        let freq_str = format!("{} run{}", s.frequency, if s.frequency != 1 { "s" } else { "" });
+        let freq_str = format!(
+            "{} run{}",
+            s.frequency,
+            if s.frequency != 1 { "s" } else { "" }
+        );
         println!(
             "  [{} {}] {}",
             freq_str.cyan(),
@@ -85,7 +95,11 @@ pub fn run(show_all: bool, add_count: Option<usize>) -> Result<()> {
 }
 
 /// Interactively add the top N suggestions to the .snips file.
-fn add_suggestions(suggestions: Vec<Suggestion>, count: usize, cwd: &std::path::Path) -> Result<()> {
+fn add_suggestions(
+    suggestions: Vec<Suggestion>,
+    count: usize,
+    cwd: &std::path::Path,
+) -> Result<()> {
     let to_add = &suggestions[..count.min(suggestions.len())];
 
     println!(
@@ -112,17 +126,13 @@ fn add_suggestions(suggestions: Vec<Suggestion>, count: usize, cwd: &std::path::
     let mut stdout = io::stdout();
 
     for (i, s) in to_add.iter().enumerate() {
-        let freq_str = format!("{} run{}", s.frequency, if s.frequency != 1 { "s" } else { "" });
-        println!(
-            "  {}. {}",
-            (i + 1).to_string().cyan().bold(),
-            s.cmd
+        let freq_str = format!(
+            "{} run{}",
+            s.frequency,
+            if s.frequency != 1 { "s" } else { "" }
         );
-        println!(
-            "     {} (score {:.1})",
-            freq_str.dimmed(),
-            s.recency_score
-        );
+        println!("  {}. {}", (i + 1).to_string().cyan().bold(), s.cmd);
+        println!("     {} (score {:.1})", freq_str.dimmed(), s.recency_score);
 
         // Suggest a default name from the command
         let default_name = suggest_name(&s.cmd);
@@ -210,16 +220,28 @@ mod tests {
     #[test]
     fn test_suggest_name() {
         assert_eq!(suggest_name("cargo build --release"), "cargo-build");
-        assert_eq!(suggest_name("docker compose up --build"), "docker-compose-up");
+        assert_eq!(
+            suggest_name("docker compose up --build"),
+            "docker-compose-up"
+        );
         assert_eq!(suggest_name("npm run dev"), "npm-run-dev");
-        assert_eq!(suggest_name("kubectl apply -f deploy.yaml"), "kubectl-apply");
+        assert_eq!(
+            suggest_name("kubectl apply -f deploy.yaml"),
+            "kubectl-apply"
+        );
         assert_eq!(suggest_name("git"), "git");
     }
 
     #[test]
     fn test_suggest_desc() {
-        assert_eq!(suggest_desc("cargo build --release"), "cargo build --release");
-        assert_eq!(suggest_desc("docker compose up --build"), "docker compose up --build");
+        assert_eq!(
+            suggest_desc("cargo build --release"),
+            "cargo build --release"
+        );
+        assert_eq!(
+            suggest_desc("docker compose up --build"),
+            "docker compose up --build"
+        );
         assert_eq!(suggest_desc("ls"), "ls");
     }
 

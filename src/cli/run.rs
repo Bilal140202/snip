@@ -3,17 +3,41 @@
 use std::io::Write as IoWrite;
 
 use anyhow::{bail, Context, Result};
+use clap::Args;
 use colored::Colorize;
 
 use crate::core::executor;
 use crate::core::fuzzy;
 use crate::core::snipfile::{find_snipfile, read_snippets};
-use crate::ui::picker::{PickerItem, PickerResult, pick};
+use crate::ui::picker::{pick, PickerItem, PickerResult};
+
+/// Options for `snip run`.
+#[derive(Debug, Args, Default)]
+pub struct RunOptions {
+    /// Print the resolved command but do NOT execute it.
+    #[arg(long)]
+    pub dry_run: bool,
+
+    /// Alias of --dry-run.
+    #[arg(long, alias = "dry-run")]
+    pub print: bool,
+}
+
+impl RunOptions {
+    pub fn should_print(&self) -> bool {
+        self.dry_run || self.print
+    }
+}
 
 /// Run `snip run <NAME_OR_FUZZY>`.
 pub fn run(name_or_fuzzy: &str) -> Result<()> {
+    run_with_options(name_or_fuzzy, &RunOptions::default())
+}
+
+/// Run `snip run <NAME_OR_FUZZY> --dry-run` (or `--print`).
+pub fn run_with_options(name_or_fuzzy: &str, opts: &RunOptions) -> Result<()> {
     let cwd = std::env::current_dir().context("Failed to determine current directory")?;
-    run_from(&cwd, name_or_fuzzy, false)
+    run_from(&cwd, name_or_fuzzy, false, opts)
 }
 
 /// Run `snip run --interactive` (or `snip run -i`) — open the picker.
@@ -54,7 +78,10 @@ pub fn run_interactive() -> Result<()> {
                 println!();
                 executor::execute(&cmd)?;
             } else {
-                bail!("Selected snippet '{}' not found (file may have changed)", key);
+                bail!(
+                    "Selected snippet '{}' not found (file may have changed)",
+                    key
+                );
             }
         }
         PickerResult::Cancelled => {
@@ -66,14 +93,16 @@ pub fn run_interactive() -> Result<()> {
 }
 
 /// Internal run function that accepts a path for testing.
-pub(crate) fn run_from(cwd: &std::path::Path, name_or_fuzzy: &str, _test_mode: bool) -> Result<()> {
+pub(crate) fn run_from(
+    cwd: &std::path::Path,
+    name_or_fuzzy: &str,
+    _test_mode: bool,
+    opts: &RunOptions,
+) -> Result<()> {
     let snipfile_path = match find_snipfile(Some(cwd))? {
         Some(p) => p,
         None => {
-            bail!(
-                "No .snips file found. Run {} first.",
-                "snip init".cyan()
-            );
+            bail!("No .snips file found. Run {} first.", "snip init".cyan());
         }
     };
 
@@ -82,6 +111,10 @@ pub(crate) fn run_from(cwd: &std::path::Path, name_or_fuzzy: &str, _test_mode: b
     // Try exact match first
     if let Some(snippet) = file.get(name_or_fuzzy) {
         let cmd = resolve_variables(snippet)?;
+        if opts.should_print() {
+            println!("{}", cmd);
+            return Ok(());
+        }
         println!("{} {}", "→".dimmed(), cmd.dimmed());
         println!();
         return executor::execute(&cmd);
@@ -102,11 +135,15 @@ pub(crate) fn run_from(cwd: &std::path::Path, name_or_fuzzy: &str, _test_mode: b
         }
     }
 
-    if matches.len() == 1 || matches[0].score > matches[1].score * 2 {
+    if matches.len() == 1 || (matches.len() > 1 && matches[0].score > matches[1].score * 2) {
         // Clear winner
         let key = &matches[0].key;
         let snippet = file.get(key).unwrap();
         let cmd = resolve_variables(snippet)?;
+        if opts.should_print() {
+            println!("{}", cmd);
+            return Ok(());
+        }
         println!("{} {}", "→".dimmed(), cmd.dimmed());
         println!();
         return executor::execute(&cmd);
@@ -188,6 +225,7 @@ pub fn resolve_variables(snippet: &crate::core::snippet::Snippet) -> Result<Stri
 
 #[cfg(test)]
 mod tests {
+    use super::RunOptions;
     use crate::core::snippet::Snippet;
 
     #[test]
@@ -199,13 +237,13 @@ mod tests {
         file.insert("hello", Snippet::new("echo hello").with_desc("Say hello"));
         crate::core::snipfile::write_snippets(&snipfile, &file).unwrap();
 
-        super::run_from(tmp.path(), "hello", true).unwrap();
+        super::run_from(tmp.path(), "hello", true, &RunOptions::default()).unwrap();
     }
 
     #[test]
     fn test_run_no_snips_file() {
         let tmp = tempfile::tempdir().unwrap();
-        let result = super::run_from(tmp.path(), "hello", true);
+        let result = super::run_from(tmp.path(), "hello", true, &RunOptions::default());
         assert!(result.is_err());
     }
 
@@ -217,7 +255,7 @@ mod tests {
         let file = crate::core::snippet::SnipFile::new();
         crate::core::snipfile::write_snippets(&snipfile, &file).unwrap();
 
-        let result = super::run_from(tmp.path(), "nonexistent", true);
+        let result = super::run_from(tmp.path(), "nonexistent", true, &RunOptions::default());
         assert!(result.is_err());
         // Should contain "did you mean" hint or "not found"
         let err = result.unwrap_err().to_string();
@@ -234,6 +272,40 @@ mod tests {
         crate::core::snipfile::write_snippets(&snipfile, &file).unwrap();
 
         // "bldrel" should fuzzy match "build-release"
-        super::run_from(tmp.path(), "bldrel", true).unwrap();
+        super::run_from(tmp.path(), "bldrel", true, &RunOptions::default()).unwrap();
+    }
+
+    #[test]
+    fn test_run_dry_run_prints_without_executing() {
+        let tmp = tempfile::tempdir().unwrap();
+        let snipfile = tmp.path().join(".snips");
+
+        let mut file = crate::core::snippet::SnipFile::new();
+        // Use a command that would fail if actually executed
+        file.insert("boom", Snippet::new("exit 42").with_desc("should not run"));
+        crate::core::snipfile::write_snippets(&snipfile, &file).unwrap();
+
+        let opts = RunOptions {
+            dry_run: true,
+            print: false,
+        };
+        // Should succeed — nothing was executed
+        super::run_from(tmp.path(), "boom", true, &opts).unwrap();
+    }
+
+    #[test]
+    fn test_run_print_alias_dry_run() {
+        let tmp = tempfile::tempdir().unwrap();
+        let snipfile = tmp.path().join(".snips");
+
+        let mut file = crate::core::snippet::SnipFile::new();
+        file.insert("boom", Snippet::new("exit 42").with_desc("should not run"));
+        crate::core::snipfile::write_snippets(&snipfile, &file).unwrap();
+
+        let opts = RunOptions {
+            dry_run: false,
+            print: true,
+        };
+        super::run_from(tmp.path(), "boom", true, &opts).unwrap();
     }
 }

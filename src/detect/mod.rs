@@ -1,8 +1,14 @@
-pub mod node;
-pub mod makefile;
 pub mod cargo;
-pub mod python;
+pub mod deno;
 pub mod docker;
+pub mod go;
+pub mod just;
+pub mod makefile;
+pub mod mix;
+pub mod node;
+pub mod python;
+pub mod rakefile;
+pub mod taskfile;
 
 use std::path::Path;
 
@@ -30,6 +36,12 @@ pub fn all_detectors() -> Vec<Box<dyn ProjectDetector>> {
         Box::new(cargo::CargoDetector),
         Box::new(python::PythonDetector),
         Box::new(docker::DockerDetector),
+        Box::new(go::GoDetector),
+        Box::new(deno::DenoDetector),
+        Box::new(taskfile::TaskfileDetector),
+        Box::new(just::JustDetector),
+        Box::new(rakefile::RakeDetector),
+        Box::new(mix::MixDetector),
     ]
 }
 

@@ -8,7 +8,6 @@ use clap::Args;
 use colored::Colorize;
 use serde::Serialize;
 
-use crate::core::snippet::Snippet;
 use crate::core::snipfile::{find_snipfile, read_snippets};
 
 /// List snippets.
@@ -139,7 +138,7 @@ fn output_human(file: &crate::core::snippet::SnipFile, section_filter: Option<&s
         }
     }
     if has_top {
-        for &(ref key, ref snippet) in &entries {
+        for (key, snippet) in &entries {
             if !key.contains('.') {
                 let padded_name = format!("{:width$}", key, width = name_width);
                 let desc = if snippet.desc.is_empty() {
@@ -156,7 +155,7 @@ fn output_human(file: &crate::core::snippet::SnipFile, section_filter: Option<&s
     for section in &sections {
         println!();
         println!("{}", format!("[{}]", section).dimmed().bold());
-        for &(ref key, ref snippet) in &entries {
+        for (key, snippet) in &entries {
             if let Some(dot_pos) = key.find('.') {
                 let sec = &key[..dot_pos];
                 if sec == section.as_str() {
@@ -200,7 +199,7 @@ fn output_json(file: &crate::core::snippet::SnipFile, section_filter: Option<&st
 
     let json_entries: Vec<SnippetEntry> = entries
         .iter()
-        .map(|&(ref key, ref snippet)| {
+        .map(|(key, snippet)| {
             let (section, name) = if let Some(dot) = key.find('.') {
                 (key[..dot].to_string(), key[dot + 1..].to_string())
             } else {
@@ -243,7 +242,7 @@ fn output_formatted(
         file.iter().collect()
     };
 
-    for &(ref key, ref snippet) in &entries {
+    for (key, snippet) in &entries {
         let (section, name) = if let Some(dot) = key.find('.') {
             (&key[..dot], &key[dot + 1..])
         } else {
@@ -261,7 +260,7 @@ fn output_formatted(
 }
 
 fn run_interactive(file: &crate::core::snippet::SnipFile) -> Result<()> {
-    use crate::ui::picker::{PickerItem, PickerResult, pick};
+    use crate::ui::picker::{pick, PickerItem, PickerResult};
 
     let items: Vec<PickerItem> = file
         .iter()
@@ -320,8 +319,7 @@ fn auto_init(path: &std::path::Path) -> Result<()> {
     // Project detected — offer auto-init
     println!(
         "{}",
-        "No .snips file found, but this looks like a project that could use one!"
-            .yellow()
+        "No .snips file found, but this looks like a project that could use one!".yellow()
     );
     println!();
 
@@ -402,7 +400,10 @@ mod tests {
 
         let mut file = crate::core::snippet::SnipFile::new();
         file.insert("hello", Snippet::new("echo hello").with_desc("Say hello"));
-        file.insert("npm.build", Snippet::new("npm run build").with_desc("Build the project"));
+        file.insert(
+            "npm.build",
+            Snippet::new("npm run build").with_desc("Build the project"),
+        );
         crate::core::snipfile::write_snippets(&snipfile, &file).unwrap();
 
         let opts = super::ListCmd {

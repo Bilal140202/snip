@@ -46,7 +46,10 @@ fn knowledge_base() -> HashMap<&'static str, &'static str> {
     kb.insert("cargo test", "Run all tests");
     kb.insert("cargo run", "Build and execute the binary");
     kb.insert("cargo clippy", "Lint the project for common mistakes");
-    kb.insert("cargo check", "Type-check without producing a binary (fast)");
+    kb.insert(
+        "cargo check",
+        "Type-check without producing a binary (fast)",
+    );
     kb.insert("cargo fmt", "Format code with rustfmt");
     kb.insert("cargo doc", "Generate documentation from doc comments");
     kb.insert("cargo publish", "Publish the crate to crates.io");
@@ -90,26 +93,50 @@ fn knowledge_base() -> HashMap<&'static str, &'static str> {
     kb.insert("git add", "Stage changes for the next commit");
     kb.insert("git commit", "Record staged changes with a message");
     kb.insert("git push", "Upload local commits to a remote repository");
-    kb.insert("git pull", "Fetch and merge changes from a remote repository");
-    kb.insert("git checkout", "Switch branches or restore working tree files");
+    kb.insert(
+        "git pull",
+        "Fetch and merge changes from a remote repository",
+    );
+    kb.insert(
+        "git checkout",
+        "Switch branches or restore working tree files",
+    );
     kb.insert("git switch", "Switch to a different branch");
     kb.insert("git branch", "List, create, or delete branches");
-    kb.insert("git merge", "Join two or more development histories together");
+    kb.insert(
+        "git merge",
+        "Join two or more development histories together",
+    );
     kb.insert("git rebase", "Reapply commits on top of another base tip");
-    kb.insert("git stash", "Stash the changes in a dirty working directory");
+    kb.insert(
+        "git stash",
+        "Stash the changes in a dirty working directory",
+    );
     kb.insert("git stash pop", "Apply and remove the latest stash entry");
     kb.insert("git stash list", "List all stash entries");
     kb.insert("git log", "Show commit logs");
-    kb.insert("git diff", "Show changes between commits, commit and working tree, etc.");
+    kb.insert(
+        "git diff",
+        "Show changes between commits, commit and working tree, etc.",
+    );
     kb.insert("git status", "Show the working tree status");
-    kb.insert("git fetch", "Download objects and refs from another repository");
+    kb.insert(
+        "git fetch",
+        "Download objects and refs from another repository",
+    );
     kb.insert("git reset", "Reset current HEAD to the specified state");
-    kb.insert("git cherry-pick", "Apply changes introduced by some existing commits");
+    kb.insert(
+        "git cherry-pick",
+        "Apply changes introduced by some existing commits",
+    );
     kb.insert("git tag", "Create, list, delete, or verify a tag object");
     kb.insert("git remote", "Manage set of tracked repositories");
 
     // docker / docker-compose
-    kb.insert("docker", "Container runtime for building and running containers");
+    kb.insert(
+        "docker",
+        "Container runtime for building and running containers",
+    );
     kb.insert("docker build", "Build an image from a Dockerfile");
     kb.insert("docker run", "Run a command in a new container");
     kb.insert("docker ps", "List running containers");
@@ -121,37 +148,88 @@ fn knowledge_base() -> HashMap<&'static str, &'static str> {
     kb.insert("docker rmi", "Remove one or more images");
     kb.insert("docker pull", "Pull an image from a registry");
     kb.insert("docker push", "Push an image to a registry");
-    kb.insert("docker-compose", "Define and run multi-container applications");
-    kb.insert("docker compose", "Define and run multi-container applications (v2 CLI plugin)");
-    kb.insert("docker-compose up", "Create and start all services in the compose file");
-    kb.insert("docker-compose down", "Stop and remove containers, networks, and images");
+    kb.insert(
+        "docker-compose",
+        "Define and run multi-container applications",
+    );
+    kb.insert(
+        "docker compose",
+        "Define and run multi-container applications (v2 CLI plugin)",
+    );
+    kb.insert(
+        "docker-compose up",
+        "Create and start all services in the compose file",
+    );
+    kb.insert(
+        "docker-compose down",
+        "Stop and remove containers, networks, and images",
+    );
     kb.insert("docker-compose build", "Build or rebuild services");
-    kb.insert("docker-compose ps", "List running containers for the compose project");
+    kb.insert(
+        "docker-compose ps",
+        "List running containers for the compose project",
+    );
     kb.insert("docker-compose logs", "View output from containers");
-    kb.insert("docker-compose exec", "Execute a command in a running service container");
-    kb.insert("docker compose up", "Create and start all services (v2 CLI plugin)");
-    kb.insert("docker compose down", "Stop and remove containers (v2 CLI plugin)");
-    kb.insert("docker compose build", "Build or rebuild services (v2 CLI plugin)");
-    kb.insert("docker compose ps", "List containers for the compose project (v2 CLI plugin)");
-    kb.insert("docker compose logs", "View output from containers (v2 CLI plugin)");
-    kb.insert("docker compose exec", "Execute a command in a running container (v2 CLI plugin)");
+    kb.insert(
+        "docker-compose exec",
+        "Execute a command in a running service container",
+    );
+    kb.insert(
+        "docker compose up",
+        "Create and start all services (v2 CLI plugin)",
+    );
+    kb.insert(
+        "docker compose down",
+        "Stop and remove containers (v2 CLI plugin)",
+    );
+    kb.insert(
+        "docker compose build",
+        "Build or rebuild services (v2 CLI plugin)",
+    );
+    kb.insert(
+        "docker compose ps",
+        "List containers for the compose project (v2 CLI plugin)",
+    );
+    kb.insert(
+        "docker compose logs",
+        "View output from containers (v2 CLI plugin)",
+    );
+    kb.insert(
+        "docker compose exec",
+        "Execute a command in a running container (v2 CLI plugin)",
+    );
 
     // kubectl
-    kb.insert("kubectl", "Command-line tool for controlling Kubernetes clusters");
-    kb.insert("kubectl apply", "Apply a configuration to a resource by file name or stdin");
+    kb.insert(
+        "kubectl",
+        "Command-line tool for controlling Kubernetes clusters",
+    );
+    kb.insert(
+        "kubectl apply",
+        "Apply a configuration to a resource by file name or stdin",
+    );
     kb.insert("kubectl delete", "Delete resources by file names, stdin, resources and names, or by resources and label selector");
     kb.insert("kubectl get", "Display one or many resources");
-    kb.insert("kubectl describe", "Show details of a specific resource or group of resources");
+    kb.insert(
+        "kubectl describe",
+        "Show details of a specific resource or group of resources",
+    );
     kb.insert("kubectl logs", "Print the logs for a container in a pod");
     kb.insert("kubectl rollout", "Manage the rollout of a resource");
     kb.insert("kubectl config", "Modify kubeconfig files");
-    kb.insert("kubectl port-forward", "Forward one or more local ports to a pod");
+    kb.insert(
+        "kubectl port-forward",
+        "Forward one or more local ports to a pod",
+    );
 
     // search / text processing
     kb.insert("grep", "Search for patterns in text using basic regex");
     kb.insert("rg", "Ripgrep: fast recursive search (respects .gitignore)");
     kb.insert("find", "Search for files in a directory hierarchy");
-    kb.insert("fd", "A simple, fast, and user-friendly alternative to find");
+    kb.insert(
+        "fd",
+        "A simple, fast, and user-friendly alternative to find",
+    );
     kb.insert("sed", "Stream editor for filtering and transforming text");
     kb.insert("awk", "Pattern scanning and text processing language");
     kb.insert("cat", "Concatenate files and print on standard output");
@@ -162,7 +240,10 @@ fn knowledge_base() -> HashMap<&'static str, &'static str> {
     kb.insert("wc", "Print newline, word, and byte counts for each file");
     kb.insert("cut", "Remove sections from each line of a file");
     kb.insert("tr", "Translate or delete characters");
-    kb.insert("xargs", "Build and execute command lines from standard input");
+    kb.insert(
+        "xargs",
+        "Build and execute command lines from standard input",
+    );
     kb.insert("jq", "Command-line JSON processor");
     kb.insert("curl", "Transfer data to or from a server");
     kb.insert("wget", "Non-interactive network downloader");
@@ -179,7 +260,10 @@ fn knowledge_base() -> HashMap<&'static str, &'static str> {
     kb.insert("pwd", "Print the name of the current working directory");
     kb.insert("env", "Display or set environment variables");
     kb.insert("export", "Set environment variables for child processes");
-    kb.insert("source", "Execute commands from a file in the current shell");
+    kb.insert(
+        "source",
+        "Execute commands from a file in the current shell",
+    );
     kb.insert("make", "Build automation tool driven by a Makefile");
     kb.insert("cmake", "Cross-platform build system generator");
     kb.insert("python", "Python interpreter");
@@ -199,7 +283,10 @@ fn knowledge_base() -> HashMap<&'static str, &'static str> {
     kb.insert("go mod", "Module maintenance");
     kb.insert("rustc", "Rust compiler");
     kb.insert("rustup", "Rust toolchain installer and updater");
-    kb.insert("cargo-watch", "Automatically run cargo when source code changes");
+    kb.insert(
+        "cargo-watch",
+        "Automatically run cargo when source code changes",
+    );
 
     kb
 }
@@ -208,7 +295,10 @@ fn knowledge_base() -> HashMap<&'static str, &'static str> {
 fn flag_knowledge() -> HashMap<&'static str, &'static str> {
     let mut fk = HashMap::new();
 
-    fk.insert("--release", "Build with optimizations (slower compile, faster binary)");
+    fk.insert(
+        "--release",
+        "Build with optimizations (slower compile, faster binary)",
+    );
     fk.insert("--verbose", "Enable verbose output");
     fk.insert("--force", "Force the operation, bypassing safety checks");
     fk.insert("-f", "Force the operation");
@@ -246,7 +336,10 @@ fn flag_knowledge() -> HashMap<&'static str, &'static str> {
     fk.insert("-j", "Number of parallel jobs (short form)");
     fk.insert("--recursive", "Operate recursively");
     fk.insert("-r", "Operate recursively (short form)");
-    fk.insert("--dry-run", "Show what would be done without making changes");
+    fk.insert(
+        "--dry-run",
+        "Show what would be done without making changes",
+    );
     fk.insert("-n", "Dry run (short form)");
     fk.insert("--yes", "Automatically answer yes to prompts");
     fk.insert("-y", "Automatically answer yes (short form)");
@@ -304,7 +397,10 @@ fn flag_knowledge() -> HashMap<&'static str, &'static str> {
     fk.insert("--show-labels", "Show labels in the output");
     fk.insert("--wide", "Wide output (more columns)");
     fk.insert("-t", "Request TTY allocation (short form)");
-    fk.insert("-it", "Interactive + TTY (pseudo-flag for docker exec / kubectl)");
+    fk.insert(
+        "-it",
+        "Interactive + TTY (pseudo-flag for docker exec / kubectl)",
+    );
 
     fk
 }
@@ -445,7 +541,7 @@ fn tokenize(cmd: &str) -> Vec<TokenInfo> {
                             if !current.is_empty() {
                                 // already flushed
                             }
-                            let tok = format!(">>");
+                            let tok = ">>".to_string();
                             tokens.push(TokenInfo {
                                 token: tok,
                                 kind: RawKind::Redirect,
@@ -474,7 +570,11 @@ fn tokenize(cmd: &str) -> Vec<TokenInfo> {
                 if let Some(last) = tokens.last_mut() {
                     if last.kind == RawKind::Normal
                         && last.token.len() == 1
-                        && last.token.chars().next().map_or(false, |c| c.is_ascii_digit())
+                        && last
+                            .token
+                            .chars()
+                            .next()
+                            .is_some_and(|c| c.is_ascii_digit())
                     {
                         // Check for fd redirect like 2>&1: after the > there may be &N
                         if redirect == ">" {
@@ -632,22 +732,18 @@ pub fn explain_command(cmd: &str) -> Vec<ExplanationPart> {
             RawKind::Normal => {
                 let token = &info.token;
 
-                if i == 0 || parts.last().map_or(false, |p| {
-                    matches!(p.kind, TokenKind::Pipe | TokenKind::Operator)
-                }) {
+                if i == 0
+                    || parts
+                        .last()
+                        .is_some_and(|p| matches!(p.kind, TokenKind::Pipe | TokenKind::Operator))
+                {
                     // This is a binary — check for "binary subcommand" in KB
                     let binary = token.split_whitespace().next().unwrap_or(token);
-                    let is_binary = if token.contains(' ') {
-                        kb.contains_key(token.as_str())
-                    } else {
-                        kb.contains_key(token.as_str())
-                    };
+                    let is_binary = kb.contains_key(token.as_str());
 
                     if is_binary {
-                        let explanation = kb
-                            .get(token.as_str())
-                            .copied()
-                            .unwrap_or("a known command");
+                        let explanation =
+                            kb.get(token.as_str()).copied().unwrap_or("a known command");
                         parts.push(ExplanationPart {
                             token: token.clone(),
                             explanation: explanation.to_string(),
@@ -733,7 +829,10 @@ pub fn explain_pipes(cmd: &str) -> Vec<PipeSegment> {
     segments
         .into_iter()
         .enumerate()
-        .map(|(pos, command)| PipeSegment { command, position: pos })
+        .map(|(pos, command)| PipeSegment {
+            command,
+            position: pos,
+        })
         .collect()
 }
 

@@ -66,8 +66,7 @@ fn parse_phony_targets(content: &str) -> Vec<String> {
     let mut targets = Vec::new();
     for line in content.lines() {
         let trimmed = line.trim();
-        if trimmed.starts_with(".PHONY:") {
-            let rest = &trimmed[7..];
+        if let Some(rest) = trimmed.strip_prefix(".PHONY:") {
             for part in rest.split_whitespace() {
                 targets.push(part.to_string());
             }
@@ -84,12 +83,12 @@ fn parse_target_descriptions(content: &str) -> std::collections::HashMap<String,
 
     let mut pending_desc = String::new();
 
-    for i in 0..lines.len() {
-        let line = lines[i].trim();
+    for line in &lines {
+        let line = line.trim();
 
         // Collect ## description lines
-        if line.starts_with("##") {
-            let desc = line[2..].trim().to_string();
+        if let Some(rest) = line.strip_prefix("##") {
+            let desc = rest.trim().to_string();
             if pending_desc.is_empty() {
                 pending_desc = desc;
             } else {

@@ -26,12 +26,13 @@ Three things make `snip` different:
 | **Project-scoped & committable** | ✅ `.snips` in repo | ✅ `package.json` | ✅ `Makefile` | ✅ `justfile` | ❌ global only |
 | **Fuzzy matching built-in** | ✅ always available | ❌ | ❌ | ⚠️ requires fzf | ⚠️ requires fzf |
 | **Human-friendly format** | ✅ TOML | ⚠️ JSON | ⚠️ tab-indented | ⚠️ custom syntax | ✅ TOML |
-| **Auto-detects existing commands** | ✅ 5 file types | N/A | N/A | ❌ | ❌ |
+| **Auto-detects existing commands** | ✅ 11 file types | N/A | N/A | ❌ | ❌ |
 | **Zero config** | ✅ `snip init` | ✅ | ✅ | ✅ | ❌ |
 | **Variable substitution** | ✅ `{{var}}` prompts | ❌ | ⚠️ make vars | ✅ recipe vars | ❌ |
-| **Team sharing** | ✅ commit `.snips` | ✅ | ✅ | ✅ | ❌ gist-based |
+| **Global snippets** | ✅ `~/.config/snip/global.toml` | ❌ | ❌ | ❌ | ✅ |
+| **Team sharing** | ✅ commit `.snips` + gist import | ✅ | ✅ | ✅ | ❌ gist-based |
 | **Cold start** | **< 5 ms** | ~150 ms | ~50 ms | ~30 ms | ~200 ms |
-| **Binary size** | **~1.4 MB** | N/A | ~400 KB | ~4 MB | ~8 MB |
+| **Binary size** | **~1.6 MB** | N/A | ~400 KB | ~4 MB | ~8 MB |
 
 ---
 
@@ -111,10 +112,15 @@ git add .snips && git commit -m "add snip commands"
 | `snip init` | Auto-detect commands and scaffold `.snips` |
 | `snip add <name> "<cmd>" [desc]` | Add a new snippet |
 | `snip rm <name>` | Remove a snippet |
+| `snip rename <old> <new>` | Rename a snippet (preserves all metadata) |
+| `snip mv <name> <section>` | Move a snippet to a different section |
 | `snip edit` | Open `.snips` in `$EDITOR` |
 | `snip list` | List snippets (alias: `snip ls`) |
-| `snip run <name>` | Execute a snippet (supports fuzzy matching) |
-| `snip import <path>` | Import snippets from another project's `.snips` |
+| `snip search <query>` | Full-text search across snippets |
+| `snip tag <tag> [--run <name>]` | List snippets by tag, optionally run one |
+| `snip run <name> [--dry-run]` | Execute a snippet (supports fuzzy matching) |
+| `snip export <name>` | Copy a snippet to clipboard (TOML or `--format cmd`) |
+| `snip import <path-or-url>` | Import from `.snips` file or GitHub gist URL |
 | `snip doctor` | Validate snippets — check if binaries exist |
 | `snip completions <shell>` | Generate shell completions (bash/zsh/fish/nushell) |
 | `snip hook` | One-line shell setup — completions + keybindings |
@@ -347,7 +353,7 @@ test: npm test
 
 ### Auto-Detection
 
-`snip init` detects commands from your existing project files:
+`snip init` detects commands from your existing project files (11 file types):
 
 | File | What it detects |
 |------|----------------|
@@ -356,6 +362,12 @@ test: npm test
 | `Cargo.toml` | Common cargo commands (build, test, run, clippy) |
 | `pyproject.toml` | PDM / project scripts |
 | `docker-compose.yml` | Service names |
+| `go.mod` | Common go commands (build, test, run, fmt, vet, mod) |
+| `deno.json` / `deno.jsonc` | Deno tasks (with comment-stripping for JSONC) |
+| `Taskfile.yml` / `Taskfile.yaml` | Top-level tasks |
+| `justfile` / `Justfile` | Recipes with `# doc` comments |
+| `Rakefile` | Tasks with `desc "..."` or `# doc` comments |
+| `mix.exs` | Common mix commands (compile, test, fmt, deps, phx, ecto, release) |
 
 Running `snip` with no `.snips` file auto-detects and offers to create one.
 
@@ -367,11 +379,15 @@ Running `snip` with no `.snips` file auto-detects and offers to create one.
 # Build
 cargo build --release
 
-# Test (91 tests)
+# Test (375 tests)
 cargo test
 
 # Install locally
 cargo install --path .
+
+# Lint (CI gate)
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features -- -D warnings
 
 # Run with debug output
 RUST_LOG=debug cargo run -- run dev

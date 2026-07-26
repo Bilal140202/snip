@@ -1,3 +1,8 @@
+// Bin crate root. The lib (src/lib.rs) exposes a public API; some pub fns
+// are not exercised by the CLI but form the library surface. Allow that
+// here so `cargo clippy --all-targets` stays clean.
+#![allow(dead_code)]
+
 mod cli;
 mod core;
 mod detect;
@@ -5,6 +10,8 @@ mod ui;
 mod utils;
 
 use clap::{Parser, Subcommand};
+
+use crate::cli::run::RunOptions;
 
 /// Project-scoped command snippets with built-in fuzzy finder.
 #[derive(Parser)]
@@ -32,6 +39,20 @@ enum Commands {
         /// Snippet key to remove.
         name: String,
     },
+    /// Rename a snippet (preserves all metadata)
+    Rename {
+        /// Old snippet key.
+        old: String,
+        /// New snippet key.
+        new: String,
+    },
+    /// Move a snippet to a different section (preserves leaf name)
+    Mv {
+        /// Snippet key to move (e.g. `build.release`).
+        name: String,
+        /// Target section (use `_` or `-` to move to top-level).
+        section: String,
+    },
     /// Open .snips in $EDITOR
     Edit,
     /// List snippets (optionally filtered)
@@ -45,9 +66,18 @@ enum Commands {
         /// Launch interactive picker (uses fzf if available).
         #[arg(short, long)]
         interactive: bool,
+
+        #[command(flatten)]
+        opts: RunOptions,
     },
-    /// Import snippets from another project
+    /// Search snippets by free-text query
+    Search(cli::search::SearchCmd),
+    /// List snippets by tag (optionally run one)
+    Tag(cli::tag::TagCmd),
+    /// Import snippets from another project or a GitHub gist URL
     Import(cli::import::ImportCmd),
+    /// Export a snippet to clipboard or stdout
+    Export(cli::export::ExportCmd),
     /// Validate snippets and report issues
     Doctor(cli::doctor::DoctorCmd),
     /// Generate shell completions
@@ -111,17 +141,31 @@ fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Some(Commands::Init) => cli::init::run(),
-        Some(Commands::Add { name, cmd, description }) => {
-            cli::add::run(&name, &cmd, description.as_deref())
-        }
+        Some(Commands::Add {
+            name,
+            cmd,
+            description,
+        }) => cli::add::run(&name, &cmd, description.as_deref()),
         Some(Commands::Rm { name }) => cli::rm::run(&name),
+        Some(Commands::Rename { old, new }) => cli::rename::run(&old, &new),
+        Some(Commands::Mv { name, section }) => cli::mv::run(&name, &section),
         Some(Commands::Edit) => cli::edit::run(),
         Some(Commands::List(opts)) => opts.run(),
-        Some(Commands::Run { name: Some(name), interactive: false }) => cli::run::run(&name),
-        Some(Commands::Run { name: None, .. }) | Some(Commands::Run { name: Some(_), interactive: true }) => {
-            cli::run::run_interactive()
-        }
+        Some(Commands::Run {
+            name: Some(name),
+            interactive: false,
+            opts,
+        }) => cli::run::run_with_options(&name, &opts),
+        Some(Commands::Run { name: None, .. })
+        | Some(Commands::Run {
+            name: Some(_),
+            interactive: true,
+            ..
+        }) => cli::run::run_interactive(),
+        Some(Commands::Search(cmd)) => cmd.run(),
+        Some(Commands::Tag(cmd)) => cmd.run(),
         Some(Commands::Import(cmd)) => cmd.run(),
+        Some(Commands::Export(cmd)) => cmd.run(),
         Some(Commands::Doctor(cmd)) => cmd.run(),
         Some(Commands::Completions { .. }) => unreachable!(),
         Some(Commands::Hook(_)) => unreachable!(),

@@ -101,10 +101,7 @@ pub fn detect_stale(file: &SnipFile, _snipfile_path: &Path) -> Vec<StaleCheck> {
                     key: key.clone(),
                     reason: format!("binary '{}' not found in PATH", first_word),
                     severity: StaleSeverity::Critical,
-                    fix_suggestion: format!(
-                        "Remove this snippet or install '{}'",
-                        first_word
-                    ),
+                    fix_suggestion: format!("Remove this snippet or install '{}'", first_word),
                 });
             }
         }
@@ -115,7 +112,10 @@ pub fn detect_stale(file: &SnipFile, _snipfile_path: &Path) -> Vec<StaleCheck> {
                 key: key.clone(),
                 reason: "has no description and the command is not self-explanatory".to_string(),
                 severity: StaleSeverity::Info,
-                fix_suggestion: format!("Add a description, e.g. `snip edit` and set desc for [{}]", key),
+                fix_suggestion: format!(
+                    "Add a description, e.g. `snip edit` and set desc for [{}]",
+                    key
+                ),
             });
         }
 
@@ -146,12 +146,10 @@ pub fn detect_stale(file: &SnipFile, _snipfile_path: &Path) -> Vec<StaleCheck> {
             if DEFAULT_SHELLS.contains(&shell.as_str()) {
                 checks.push(StaleCheck {
                     key: key.clone(),
-                    reason: format!(
-                        "has shell override '{}' which is likely the default",
-                        shell
-                    ),
+                    reason: format!("has shell override '{}' which is likely the default", shell),
                     severity: StaleSeverity::Info,
-                    fix_suggestion: "Remove the 'shell' field if it matches your default shell".to_string(),
+                    fix_suggestion: "Remove the 'shell' field if it matches your default shell"
+                        .to_string(),
                 });
             }
         }
@@ -165,7 +163,9 @@ pub fn detect_stale(file: &SnipFile, _snipfile_path: &Path) -> Vec<StaleCheck> {
                     snippet.cmd.len()
                 ),
                 severity: StaleSeverity::Warning,
-                fix_suggestion: "Move this command to a script file and reference it from the snippet".to_string(),
+                fix_suggestion:
+                    "Move this command to a script file and reference it from the snippet"
+                        .to_string(),
             });
         }
 
@@ -190,7 +190,7 @@ pub fn detect_stale(file: &SnipFile, _snipfile_path: &Path) -> Vec<StaleCheck> {
     // --- Cross-snippet checks ---
 
     // (b) Duplicate commands (Warning)
-    for (_cmd, keys) in &cmd_to_keys {
+    for keys in cmd_to_keys.values() {
         if keys.len() > 1 {
             let key_list = keys.join(", ");
             for key in keys {
@@ -237,9 +237,18 @@ pub fn format_stale_report(checks: &[StaleCheck]) -> String {
         return "✓ No staleness issues found.".green().to_string();
     }
 
-    let critical: Vec<_> = checks.iter().filter(|c| c.severity == StaleSeverity::Critical).collect();
-    let warnings: Vec<_> = checks.iter().filter(|c| c.severity == StaleSeverity::Warning).collect();
-    let infos: Vec<_> = checks.iter().filter(|c| c.severity == StaleSeverity::Info).collect();
+    let critical: Vec<_> = checks
+        .iter()
+        .filter(|c| c.severity == StaleSeverity::Critical)
+        .collect();
+    let warnings: Vec<_> = checks
+        .iter()
+        .filter(|c| c.severity == StaleSeverity::Warning)
+        .collect();
+    let infos: Vec<_> = checks
+        .iter()
+        .filter(|c| c.severity == StaleSeverity::Info)
+        .collect();
 
     let mut out = String::new();
 
@@ -402,18 +411,21 @@ mod tests {
         );
         let path = Path::new("/tmp/.snips");
         let checks = detect_stale(&file, path);
-        assert!(checks.iter().any(|c| c.reason.contains("duplicate command")));
+        assert!(checks
+            .iter()
+            .any(|c| c.reason.contains("duplicate command")));
     }
 
     #[test]
     fn detect_stale_empty_description() {
         let mut file = SnipFile::new();
-        file.insert("short", Snippet::new("echo hi").with_tags(vec!["test".to_string()]));
+        file.insert(
+            "short",
+            Snippet::new("echo hi").with_tags(vec!["test".to_string()]),
+        );
         let path = Path::new("/tmp/.snips");
         let checks = detect_stale(&file, path);
-        assert!(checks
-            .iter()
-            .any(|c| c.reason.contains("no description")));
+        assert!(checks.iter().any(|c| c.reason.contains("no description")));
     }
 
     #[test]
@@ -421,7 +433,10 @@ mod tests {
         let mut file = SnipFile::new();
         // 41+ char command should not trigger empty-desc check
         let long_cmd = "echo this is a very long command that is clearly self-explanatory enough";
-        file.insert("verbose", Snippet::new(long_cmd).with_tags(vec!["test".to_string()]));
+        file.insert(
+            "verbose",
+            Snippet::new(long_cmd).with_tags(vec!["test".to_string()]),
+        );
         let path = Path::new("/tmp/.snips");
         let checks = detect_stale(&file, path);
         assert!(!checks.iter().any(|c| c.reason.contains("no description")));
@@ -432,13 +447,13 @@ mod tests {
         let mut file = SnipFile::new();
         file.insert(
             "install",
-            Snippet::new("npm install").with_desc("Install deps").with_tags(vec!["npm".to_string()]),
+            Snippet::new("npm install")
+                .with_desc("Install deps")
+                .with_tags(vec!["npm".to_string()]),
         );
         let path = Path::new("/tmp/.snips");
         let checks = detect_stale(&file, path);
-        assert!(checks
-            .iter()
-            .any(|c| c.reason.contains("npm install")));
+        assert!(checks.iter().any(|c| c.reason.contains("npm install")));
     }
 
     #[test]
@@ -452,9 +467,7 @@ mod tests {
         );
         let path = Path::new("/tmp/.snips");
         let checks = detect_stale(&file, path);
-        assert!(checks
-            .iter()
-            .any(|c| c.reason.contains("docker-compose")));
+        assert!(checks.iter().any(|c| c.reason.contains("docker-compose")));
     }
 
     #[test]
@@ -468,9 +481,7 @@ mod tests {
         );
         let path = Path::new("/tmp/.snips");
         let checks = detect_stale(&file, path);
-        assert!(checks
-            .iter()
-            .any(|c| c.reason.contains("git checkout -b")));
+        assert!(checks.iter().any(|c| c.reason.contains("git checkout -b")));
     }
 
     #[test]
@@ -485,9 +496,7 @@ mod tests {
         );
         let path = Path::new("/tmp/.snips");
         let checks = detect_stale(&file, path);
-        assert!(checks
-            .iter()
-            .any(|c| c.reason.contains("shell override")));
+        assert!(checks.iter().any(|c| c.reason.contains("shell override")));
     }
 
     #[test]
@@ -502,9 +511,7 @@ mod tests {
         );
         let path = Path::new("/tmp/.snips");
         let checks = detect_stale(&file, path);
-        assert!(checks
-            .iter()
-            .any(|c| c.reason.contains("chars long")));
+        assert!(checks.iter().any(|c| c.reason.contains("chars long")));
     }
 
     #[test]
@@ -534,7 +541,8 @@ mod tests {
             key: "bad".to_string(),
             reason: "binary 'nonexistent_xyz_binary_123' not found in PATH".to_string(),
             severity: StaleSeverity::Critical,
-            fix_suggestion: "Remove this snippet or install 'nonexistent_xyz_binary_123'".to_string(),
+            fix_suggestion: "Remove this snippet or install 'nonexistent_xyz_binary_123'"
+                .to_string(),
         };
         let fixed = fix_stale(&check, &mut file).unwrap();
         assert!(fixed);
@@ -560,11 +568,7 @@ mod tests {
     #[test]
     fn fix_stale_removes_shell_override() {
         let mut file = SnipFile::new();
-        file.insert(
-            "hello",
-            Snippet::new("echo hello")
-                .with_shell("bash"),
-        );
+        file.insert("hello", Snippet::new("echo hello").with_shell("bash"));
         let check = StaleCheck {
             key: "hello".to_string(),
             reason: "has shell override 'bash' which is likely the default".to_string(),
@@ -579,10 +583,7 @@ mod tests {
     #[test]
     fn fix_stale_noop_for_deprecated() {
         let mut file = SnipFile::new();
-        file.insert(
-            "install",
-            Snippet::new("npm install").with_desc("Install"),
-        );
+        file.insert("install", Snippet::new("npm install").with_desc("Install"));
         let check = StaleCheck {
             key: "install".to_string(),
             reason: "uses 'npm install' instead of 'npm ci'".to_string(),
@@ -632,7 +633,9 @@ mod tests {
         let mut file = SnipFile::new();
         file.insert(
             "info_snip",
-            Snippet::new("echo hi").with_desc("Say hi").with_tags(vec!["test".to_string()]),
+            Snippet::new("echo hi")
+                .with_desc("Say hi")
+                .with_tags(vec!["test".to_string()]),
         );
         file.insert(
             "critical_snip",

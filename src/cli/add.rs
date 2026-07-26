@@ -2,8 +2,8 @@ use std::path::Path;
 
 use anyhow::{bail, Context, Result};
 
-use crate::core::snippet::Snippet;
 use crate::core::snipfile::{find_snipfile, read_snippets, write_snippets};
+use crate::core::snippet::Snippet;
 
 /// Run `snip add <NAME> "<CMD>" [DESCRIPTION]`.
 pub fn run(name: &str, cmd: &str, description: Option<&str>) -> Result<()> {

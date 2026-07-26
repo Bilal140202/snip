@@ -59,12 +59,7 @@ pub(crate) fn run_at(root: &Path, fix: bool, json: bool) -> Result<()> {
                 Ok(true) => fixed_count += 1,
                 Ok(false) => unfixable_count += 1,
                 Err(e) => {
-                    eprintln!(
-                        "{} Fixing [{}] failed: {}",
-                        "!".yellow(),
-                        check.key,
-                        e
-                    );
+                    eprintln!("{} Fixing [{}] failed: {}", "!".yellow(), check.key, e);
                 }
             }
         }
@@ -93,10 +88,7 @@ pub(crate) fn run_at(root: &Path, fix: bool, json: bool) -> Result<()> {
             println!("{}", "Remaining issues:".dimmed());
             println!("{}", stale::format_stale_report(&new_checks));
         } else if fixed_count > 0 {
-            println!(
-                "{} All issues resolved.",
-                "✓".green()
-            );
+            println!("{} All issues resolved.", "✓".green());
         }
 
         return Ok(());

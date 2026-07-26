@@ -57,7 +57,11 @@ pub(crate) fn run_at(root: &Path, auto_fix: bool) -> Result<()> {
         let binary = first_word.to_string();
 
         // Skip special shells and builtins
-        if ["sh", "bash", "zsh", "fish", "true", "false", "echo", "cd", "test"].contains(&binary.as_str()) {
+        if [
+            "sh", "bash", "zsh", "fish", "true", "false", "echo", "cd", "test",
+        ]
+        .contains(&binary.as_str())
+        {
             println!("{} {} — {}", "✓".green(), key.cyan(), snippet.cmd.dimmed());
             valid_count += 1;
             continue;
@@ -115,7 +119,7 @@ pub(crate) fn run_at(root: &Path, auto_fix: bool) -> Result<()> {
                         let var_name = issue.message[start + 2..end].trim();
                         if let Some(snippet) = file.get_mut(&issue.key) {
                             use crate::core::snippet::VarDef;
-                            let var_def = VarDef::new(var_name, &format!("{} variable", var_name));
+                            let var_def = VarDef::new(var_name, format!("{} variable", var_name));
                             snippet.vars.push(var_def);
                             fixes_applied.push(format!(
                                 "Added var definition '{}' to '{}'",
@@ -158,16 +162,13 @@ pub(crate) fn run_at(root: &Path, auto_fix: bool) -> Result<()> {
             write_snippets(&snipfile_path, &file)?;
             println!();
             println!("{}", "  .snips file updated.".dimmed());
+            println!("  {} fix(es) applied.", fixed_count);
         }
     }
 
     println!();
     if broken_count == 0 && issues.is_empty() {
-        println!(
-            "{} All {} snippet(s) are valid.",
-            "✓".green(),
-            valid_count
-        );
+        println!("{} All {} snippet(s) are valid.", "✓".green(), valid_count);
     } else {
         let fix_hint = if auto_fix {
             String::new()
@@ -208,7 +209,10 @@ mod tests {
         let snipfile = tmp.path().join(".snips");
 
         let mut file = crate::core::snippet::SnipFile::new();
-        file.insert("bad", Snippet::new("nonexistent_binary_xyz_123 --flag").with_desc("A broken command"));
+        file.insert(
+            "bad",
+            Snippet::new("nonexistent_binary_xyz_123 --flag").with_desc("A broken command"),
+        );
         crate::core::snipfile::write_snippets(&snipfile, &file).unwrap();
 
         super::run_at(tmp.path(), false).unwrap();

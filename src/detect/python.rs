@@ -39,12 +39,7 @@ impl ProjectDetector for PythonDetector {
                     Some(s) => s.to_string(),
                     None => continue,
                 };
-                snippets.push((
-                    "python".to_string(),
-                    name.clone(),
-                    cmd,
-                    name.clone(),
-                ));
+                snippets.push(("python".to_string(), name.clone(), cmd, name.clone()));
             }
         }
 
@@ -73,12 +68,7 @@ impl ProjectDetector for PythonDetector {
                     .and_then(|h| h.as_str())
                     .unwrap_or(name)
                     .to_string();
-                snippets.push((
-                    "python".to_string(),
-                    name.clone(),
-                    cmd,
-                    desc,
-                ));
+                snippets.push(("python".to_string(), name.clone(), cmd, desc));
             }
         }
 

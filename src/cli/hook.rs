@@ -1,7 +1,7 @@
 //! `snip hook` — Print shell integration code for eval "$(snip hook)".
 
-use clap::ValueEnum;
 use anyhow::Result;
+use clap::ValueEnum;
 
 /// Generate shell integration code.
 #[derive(Debug, clap::Args)]
@@ -19,6 +19,7 @@ pub enum Shell {
 }
 
 impl Shell {
+    #[allow(dead_code)]
     fn as_str(self) -> &'static str {
         match self {
             Shell::Bash => "bash",

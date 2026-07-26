@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-07-26
+
+### Added
+- **6 new auto-detectors**: Go (`go.mod`), Deno (`deno.json`/`deno.jsonc`),
+  Taskfile (`Taskfile.yml`), just (`justfile`), Rake (`Rakefile`), and
+  Elixir Mix (`mix.exs`). `snip init` now recognises 11 project types
+  (up from 5).
+- **`snip search <query>`**: full-text search across snippet key, command,
+  description, and tags. Supports `--json` for piping to other tools.
+- **`snip tag <tag>`**: list snippets by tag, with `--run <name>` to execute
+  a filtered snippet, and `--json` output. Suggests existing tags on
+  no-match.
+- **`snip rename <old> <new>`**: rename a snippet while preserving all
+  metadata (vars, tags, shell, dir).
+- **`snip mv <name> <section>`**: move a snippet to a different section
+  while preserving its leaf name. Use `_` or `-` as section to move to
+  top-level.
+- **`snip export <name>`**: copy a snippet to the clipboard as TOML or
+  just the command (`--format cmd`). Falls back to stdout (`--stdout`)
+  when no clipboard tool is available. Supports wl-copy / xclip / xsel /
+  pbcopy / clip.
+- **`snip run --dry-run` / `--print`**: print the resolved command without
+  executing it. Useful for verifying variable substitution.
+- **`snip import <url>`**: import snippets from a GitHub gist URL
+  (`https://gist.github.com/<user>/<id>`). Auto-picks the first `.toml`
+  or `.snips` file in the gist; override with `--file <name>`.
+- **Global snippets**: `~/.config/snip/global.toml` (XDG) or `~/.snips`
+  (legacy) is automatically merged into every project at the lowest
+  priority. Personal cross-project commands without copy-paste.
+
+### Changed
+- `read_all_snippets` now merges global snippets first (lowest priority),
+  then `.snips.d/*.toml`, then `.snips`, then `.snips.d/_local.toml`.
+- Cleaned up 49 dead-code warnings; added `#![allow(dead_code)]` at the
+  bin crate root for the lib's public API surface.
+- Fixed pre-existing bug where `docker.rs` called `serde_yaml` even when
+  the `detect-docker` feature was disabled. Now uses a naive line-based
+  parser as a fallback so `--no-default-features --features picker`
+  compiles cleanly.
+- Moved `rust-version` from `[profile.release]` (where it was a warning)
+  to `[package]` where it belongs.
+- Clippy now passes with `-D warnings` on `--all-targets --all-features`.
+
+### Tests
+- **375 tests** (up from 165) — every new feature has unit tests covering
+  happy path, edge cases, and error paths.
+
 ## [0.2.0] - 2026-07-19
 
 ### Added

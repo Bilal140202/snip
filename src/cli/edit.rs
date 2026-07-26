@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 
-use crate::core::snippet::SnipFile;
 use crate::core::snipfile::{find_snipfile, write_snippets};
+use crate::core::snippet::SnipFile;
 
 /// Run `snip edit` — open `.snips` in `$EDITOR`.
 pub fn run() -> Result<()> {

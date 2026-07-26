@@ -40,12 +40,7 @@ impl ProjectDetector for CargoDetector {
                     Some(s) => s.to_string(),
                     None => continue,
                 };
-                snippets.push((
-                    "cargo".to_string(),
-                    name.clone(),
-                    cmd,
-                    name.clone(),
-                ));
+                snippets.push(("cargo".to_string(), name.clone(), cmd, name.clone()));
             }
         }
 
