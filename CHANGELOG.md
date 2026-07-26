@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2] - 2026-07-26
+
+### Changed
+- **Crate renamed to `snipcmd`** for crates.io publication. The crate name
+  `snip` was already taken on crates.io (by Daniel McGraw's "Text snippets
+  on the command line" from 2021). The binary is still installed as `snip`
+  — only the cargo package name changed.
+- Install command is now `cargo install snipcmd` (was `cargo install snip`).
+- Added `[[bin]] name = "snip"` so the binary keeps its name.
+- Added `homepage`, `documentation`, and `readme` fields to `Cargo.toml`
+  for better crates.io metadata.
+
 ## [0.3.1] - 2026-07-26
 
 ### Fixed

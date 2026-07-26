@@ -41,8 +41,11 @@ Three things make `snip` different:
 ### From crates.io (recommended)
 
 ```bash
-cargo install snip
+cargo install snipcmd
 ```
+
+The package is published as `snipcmd` because `snip` was already taken
+on crates.io. The binary is still installed as `snip`.
 
 ### From source
 
@@ -59,16 +62,16 @@ Pre-built binaries for Linux, macOS, and Windows are available on the
 
 ```bash
 # Linux (x86_64)
-curl -sL https://github.com/Bilal140202/snip/releases/latest/download/snip-linux-x86_64.tar.gz | tar xz
+curl -sL https://github.com/Bilal140202/snip/releases/latest/download/snip-x86_64-linux.tar.gz | tar xz
 
 # macOS (Apple Silicon)
-curl -sL https://github.com/Bilal140202/snip/releases/latest/download/snip-darwin-aarch64.tar.gz | tar xz
+curl -sL https://github.com/Bilal140202/snip/releases/latest/download/snip-aarch64-macos.tar.gz | tar xz
 ```
 
-### Homebrew (coming soon)
+### Homebrew
 
 ```bash
-brew install snip
+brew install Bilal140202/snip/snip
 ```
 
 ---
