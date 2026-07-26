@@ -136,8 +136,17 @@ jobs:
         run: |
           mkdir -p dist
           for dir in artifacts/*/; do
-            cp "$dir"* dist/ 2>/dev/null || true
+            # Each artifact dir is named after the matrix.asset
+            # (e.g. snip-x86_64-linux, snip-aarch64-macos).
+            # Inside is the binary, named per matrix.artifact (snip or snip.exe).
+            asset_name=$(basename "$dir")
+            if [ -f "$dir/snip.exe" ]; then
+              cp "$dir/snip.exe" "dist/${asset_name}.exe"
+            elif [ -f "$dir/snip" ]; then
+              cp "$dir/snip" "dist/${asset_name}"
+            fi
           done
+          ls -la dist/
       - name: Generate SHA-256 checksums
         working-directory: dist
         run: |

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2026-07-26
+
+### Fixed
+- **MSRV bump**: 1.75 → 1.78. Cargo.lock version 4 (default since Rust 1.78)
+  is not understood by older Cargo, breaking the 1.75.0 CI matrix.
+- **macOS path canonicalization**: `find_snipfile_in_cwd` test now
+  canonicalizes both paths before comparing, because macOS symlinks
+  `/var` → `/private/var` (current_dir returns canonical, tempdir doesn't).
+- **Release workflow**: the flatten step now renames binaries by their
+  target architecture instead of leaving them all named `snip` (which
+  caused macOS x86_64 and aarch64 binaries to overwrite each other).
+  Now the release correctly contains all 4 binaries:
+  `snip-x86_64-linux`, `snip-x86_64-macos`, `snip-aarch64-macos`,
+  `snip-x86_64-windows.exe`.
+
 ## [0.3.0] - 2026-07-26
 
 ### Added
