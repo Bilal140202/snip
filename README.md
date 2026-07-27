@@ -150,7 +150,7 @@ git add .snips && git commit -m "add snip commands"
 | `snip suggest` | Analyze shell history and suggest snippet candidates |
 | `snip explain <name>` | Break down what a snippet command does |
 | `snip stale` | Detect unused or outdated snippets |
-| `snip setup` | Interactive team onboarding wizard |
+| `snip setup` | Full project bootstrap: install deps, create .env, build, test, dev |
 
 ---
 
@@ -396,13 +396,66 @@ Running `snip` with no `.snips` file auto-detects and offers to create one.
 
 ---
 
+## 🚀 Project Onboarding
+
+`snip setup` is a one-command project bootstrap — point a new teammate at a
+fresh clone and they're productive immediately:
+
+```bash
+git clone https://github.com/yourorg/yourproject.git
+cd yourproject
+snip setup
+```
+
+Seven steps run in order:
+
+1. **check-tools** — detect Node/Rust/Go/Python/Docker/etc. from project files
+2. **install-deps** — `pnpm install` / `cargo fetch` / `go mod download` (auto-detected from lockfiles)
+3. **create-env** — copy `.env.example` → `.env`, or generate a template from env vars referenced in snippets
+4. **start-services** — `docker compose up -d` if `docker-compose.yml` exists
+5. **build** — run the project's build command
+6. **test** — run the project's tests
+7. **dev** — start the dev server in the foreground
+
+```bash
+# Skip specific steps:
+snip setup --skip=build,test
+
+# Run only specific steps:
+snip setup --only=install-deps,create-env
+
+# Non-interactive (CI mode):
+snip setup --non-interactive
+
+# Dry-run (show what would happen):
+snip setup --dry-run
+```
+
+Each step prefers a snippet tagged `["setup"]` whose key matches the step name,
+falling back to auto-detected commands. This lets teams customize setup
+without config files:
+
+```toml
+[install-deps]
+cmd = "pnpm install --frozen-lockfile"
+desc = "Install dependencies"
+tags = ["setup"]
+
+[build]
+cmd = "turbo build"
+desc = "Build all packages"
+tags = ["setup"]
+```
+
+---
+
 ## 🛠 Development
 
 ```bash
 # Build
 cargo build --release
 
-# Test (386 tests)
+# Test (469 tests)
 cargo test
 
 # Install locally

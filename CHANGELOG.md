@@ -2,6 +2,76 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-07-27
+
+### Added
+- **`snip setup` — full project bootstrap**. One command to get a fresh clone
+  running: detect tools → install deps → create `.env` → start services →
+  build → test → start dev server.
+
+  ```bash
+  # Full bootstrap (interactive — prompts before each step):
+  snip setup
+
+  # Skip specific steps:
+  snip setup --skip=build,test
+
+  # Run only specific steps:
+  snip setup --only=install-deps,create-env
+
+  # Non-interactive (CI mode — uses defaults, never prompts):
+  snip setup --non-interactive
+
+  # Dry-run — show what would happen without executing anything:
+  snip setup --dry-run
+  ```
+
+  Seven steps run in order, each preferring a snippet tagged `["setup"]`
+  whose key matches the step name (e.g. `install-deps`, `build`, `test`,
+  `dev`, `start-services`). Falls back to auto-detected commands based on
+  project files.
+
+  | Step | What it does |
+  |------|--------------|
+  | `check-tools` | Detect Node/Rust/Go/Python/Docker/etc. from project files. Reports found + missing. |
+  | `install-deps` | `pnpm install` / `npm install` / `cargo fetch` / `go mod download` / `pip install` / `bundle install` / `mix deps.get` (auto-detected from lockfiles). |
+  | `create-env` | Copy `.env.example` → `.env`. If no example, generate a template from env vars referenced in snippets (`$VAR`, `${VAR}`). Never overwrites an existing `.env`. |
+  | `start-services` | `docker compose up -d` if `docker-compose.yml` exists and daemon is running. Skips gracefully if Docker isn't available. |
+  | `build` | Run the project's build command (snippet tagged `["setup"]` with key `build`, else `build` snippet, else detected). |
+  | `test` | Run the project's test command. Failures don't abort setup. |
+  | `dev` | Start the dev server in the foreground (last step, blocks until Ctrl+C). |
+
+  **Snippet-driven customization**: tag any snippet with `["setup"]` and it
+  will be used in preference to the auto-detected command:
+
+  ```toml
+  [install-deps]
+  cmd = "pnpm install --frozen-lockfile"
+  desc = "Install dependencies"
+  tags = ["setup"]
+
+  [build]
+  cmd = "turbo build"
+  desc = "Build all packages"
+  tags = ["setup"]
+  ```
+
+  **Safety**: in interactive mode (default), prompts before any step that
+  executes a command. `--non-interactive` skips prompts (CI mode).
+  `--dry-run` prints what would run without executing anything. The `dev`
+  step is always last and runs in the foreground.
+
+  Output ends with a summary table:
+  ```
+  ✓ check-tools     found: Node.js, git
+  ✓ install-deps    pnpm install (245 packages)
+  ✓ create-env      .env created from .env.example
+  · start-services  no docker-compose.yml found
+  ✓ build           turbo build (12.3s)
+  ✓ test            vitest run (47 passed)
+  → dev             starting dev server... (Ctrl+C to stop)
+  ```
+
 ## [0.4.0] - 2026-07-27
 
 ### Added

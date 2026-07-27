@@ -112,8 +112,8 @@ enum Commands {
         #[arg(long)]
         json: bool,
     },
-    /// Interactive team onboarding wizard
-    Setup,
+    /// Full project bootstrap (install deps, create .env, build, test, dev)
+    Setup(cli::setup::SetupCmd),
 }
 
 fn main() -> anyhow::Result<()> {
@@ -196,7 +196,7 @@ fn main() -> anyhow::Result<()> {
         Some(Commands::Suggest { all, add }) => cli::suggest::run(all, add),
         Some(Commands::Explain { name }) => cli::explain::run(&name),
         Some(Commands::Stale { fix, json }) => cli::stale::run(fix, json),
-        Some(Commands::Setup) => cli::setup::run(),
+        Some(Commands::Setup(cmd)) => cmd.run(),
         None => {
             // No subcommand → list snippets (with auto-init)
             let opts = cli::list::ListCmd {
