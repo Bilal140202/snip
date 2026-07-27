@@ -3,6 +3,7 @@ pub mod executor;
 pub mod explainer;
 pub mod fuzzy;
 pub mod history;
+pub mod nl;
 pub mod snipfile;
 pub mod snippet;
 pub mod stale;

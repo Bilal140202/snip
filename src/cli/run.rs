@@ -34,6 +34,82 @@ pub fn run(name_or_fuzzy: &str) -> Result<()> {
     run_with_options(name_or_fuzzy, &RunOptions::default())
 }
 
+/// Run a snippet by natural-language phrase (e.g. `snip "deploy staging"`).
+///
+/// Falls back to this from `main.rs` when clap can't parse the args because
+/// the first positional looks like an unknown subcommand. We score every
+/// snippet against the phrase and execute the best match.
+pub fn run_natural_language(phrase: &str) -> Result<()> {
+    let cwd = std::env::current_dir().context("Failed to determine current directory")?;
+    let snipfile_path = match find_snipfile(Some(&cwd))? {
+        Some(p) => p,
+        None => bail!("No .snips file found. Run {} first.", "snip init".cyan()),
+    };
+
+    let file = read_snippets(&snipfile_path)?;
+    if file.is_empty() {
+        bail!("No snippets defined. Add one with `snip add <name> \"<cmd>\"`.");
+    }
+
+    let matches = crate::core::nl::nl_match(&file, phrase);
+
+    if matches.is_empty() {
+        bail!(
+            "No snippet matched '{}'. Try `snip search {}` to find one.",
+            phrase,
+            phrase
+        );
+    }
+
+    // Clear winner: top score beats runner-up by a meaningful margin.
+    // The scoring system uses 10/15/20/25-point increments per token match,
+    // plus 200/300-point phrase bonuses, so a 30-point margin is roughly
+    // "one extra token matched" — a meaningful signal.
+    if matches.len() == 1 {
+        let key = &matches[0].key;
+        let snippet = file.get(key).unwrap();
+        let cmd = resolve_variables(snippet)?;
+        println!("{} {}", "→".dimmed(), cmd.dimmed());
+        println!();
+        return executor::execute(&cmd);
+    }
+
+    let top = &matches[0];
+    let runner_up = &matches[1];
+    let margin = top.score - runner_up.score;
+    if margin >= 30 || top.score >= runner_up.score * 2 {
+        let key = &top.key;
+        let snippet = file.get(key).unwrap();
+        let cmd = resolve_variables(snippet)?;
+        println!("{} {}", "→".dimmed(), cmd.dimmed());
+        println!();
+        return executor::execute(&cmd);
+    }
+
+    // Multiple close matches — show top 5 and let the user be more specific
+    println!(
+        "{}  Multiple snippets matched '{}':",
+        "→".dimmed(),
+        phrase.cyan()
+    );
+    for m in &matches[..5.min(matches.len())] {
+        let desc = file
+            .get(&m.key)
+            .map(|s| {
+                if s.desc.is_empty() {
+                    s.cmd.clone()
+                } else {
+                    s.desc.clone()
+                }
+            })
+            .unwrap_or_default();
+        println!("  {} {}", m.key.cyan(), desc.dimmed());
+    }
+    println!();
+    println!("Run {} to execute a specific one.", "snip run <key>".cyan());
+    Ok(())
+}
+
 /// Run `snip run <NAME_OR_FUZZY> --dry-run` (or `--print`).
 pub fn run_with_options(name_or_fuzzy: &str, opts: &RunOptions) -> Result<()> {
     let cwd = std::env::current_dir().context("Failed to determine current directory")?;
@@ -66,6 +142,9 @@ pub fn run_interactive() -> Result<()> {
                 key: key.clone(),
                 display: format!("{} — {}", key, desc),
                 detail: desc,
+                cmd: snippet.cmd.clone(),
+                tags: snippet.tags.clone(),
+                vars: snippet.placeholder_names(),
             }
         })
         .collect();

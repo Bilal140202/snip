@@ -117,7 +117,40 @@ enum Commands {
 }
 
 fn main() -> anyhow::Result<()> {
-    let cli = Cli::parse();
+    // Handle hidden `snip _complete` for dynamic shell completions FIRST,
+    // before any clap parsing — clap would reject `_complete` as unknown.
+    let raw_args: Vec<String> = std::env::args().collect();
+    if raw_args.len() >= 3 && raw_args[1] == "_complete" {
+        let kind = &raw_args[2];
+        let partial = raw_args.get(3).map(|s| s.as_str());
+        return cli::completions::run_complete(kind, partial);
+    }
+
+    // Parse args. If clap rejects them because the first positional looks
+    // like an unknown subcommand, fall back to natural-language execution:
+    //   snip "deploy staging"   →   snip run-by-phrase "deploy staging"
+    let cli = match Cli::try_parse() {
+        Ok(c) => c,
+        Err(_) => {
+            // Only attempt NL fallback if there's exactly one positional arg
+            // (the phrase). Otherwise re-emit the clap error so users see
+            // real usage errors.
+            let positional: Vec<&String> = raw_args
+                .iter()
+                .skip(1)
+                .filter(|a| !a.starts_with('-'))
+                .collect();
+            if positional.len() == 1 {
+                let phrase = positional[0].as_str();
+                // Don't intercept if it's actually a known subcommand typo
+                // (clap would have suggested a fix in its error). Just try NL.
+                return cli::run::run_natural_language(phrase);
+            }
+            // Re-parse to surface clap's error message + exit code
+            Cli::parse();
+            unreachable!();
+        }
+    };
 
     // Handle `snip completions` before the default path
     match &cli.command {
@@ -128,15 +161,6 @@ fn main() -> anyhow::Result<()> {
             return cmd.run();
         }
         _ => {}
-    }
-
-    // Handle hidden `snip _complete` for dynamic shell completions
-    // This is called by shell completion scripts
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() >= 3 && args[1] == "_complete" {
-        let kind = &args[2];
-        let partial = args.get(3).map(|s| s.as_str());
-        return cli::completions::run_complete(kind, partial);
     }
 
     match cli.command {

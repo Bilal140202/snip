@@ -274,6 +274,9 @@ fn run_interactive(file: &crate::core::snippet::SnipFile) -> Result<()> {
                 key: key.clone(),
                 display: format!("{} — {}", key, desc),
                 detail: desc,
+                cmd: snippet.cmd.clone(),
+                tags: snippet.tags.clone(),
+                vars: snippet.placeholder_names(),
             }
         })
         .collect();

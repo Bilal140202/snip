@@ -13,13 +13,32 @@
 
 ## 🎯 Why snip?
 
-Every project has commands you always forget. *"What's the deploy command?"* *"How do I seed the database?"*
-You search CONTRIBUTING.md. You scroll through terminal history. You Slack a coworker.
+**Before:**
 
-Not anymore. `snip` saves project-scoped command snippets in a committable `.snips` file.
-Run `snip` to list them. Run `snip run <name>` to execute them. No memorization. No config.
+```
+README → find command → copy → paste → switch back → run
+```
 
-Three things make `snip` different:
+**After:**
+
+```bash
+$ snip dev
+→ npm run dev
+```
+
+That's it. One command. No memorization, no scrolling history, no Slack-ing coworkers.
+
+---
+
+`snip` saves project-scoped command snippets in a committable `.snips` file.
+Run `snip` to list them. Run `snip run <name>` to execute them. Run
+`snip "start frontend"` to run by natural language. No memorization. No config.
+
+Every project has commands you always forget. *"What's the deploy command?"*
+*"How do I seed the database?"* `snip` fixes that — and once you commit `.snips`
+to git, every teammate gets the same commands automatically.
+
+### What makes snip different
 
 | | snip | `npm run` | `make` | `just` | `pet` |
 |---|---|---|---|---|---|
@@ -122,9 +141,10 @@ git add .snips && git commit -m "add snip commands"
 | `snip search <query>` | Full-text search across snippets |
 | `snip tag <tag> [--run <name>]` | List snippets by tag, optionally run one |
 | `snip run <name> [--dry-run]` | Execute a snippet (supports fuzzy matching) |
+| `snip "<phrase>"` | Execute by natural language (e.g. `snip "deploy staging"`) |
 | `snip export <name>` | Copy a snippet to clipboard (TOML or `--format cmd`) |
 | `snip import <path-or-url>` | Import from `.snips` file or GitHub gist URL |
-| `snip doctor` | Validate snippets — check if binaries exist |
+| `snip doctor` | Validate snippets + check env vars, Docker, .env presence |
 | `snip completions <shell>` | Generate shell completions (bash/zsh/fish/nushell) |
 | `snip hook` | One-line shell setup — completions + keybindings |
 | `snip suggest` | Analyze shell history and suggest snippet candidates |
@@ -382,7 +402,7 @@ Running `snip` with no `.snips` file auto-detects and offers to create one.
 # Build
 cargo build --release
 
-# Test (375 tests)
+# Test (386 tests)
 cargo test
 
 # Install locally

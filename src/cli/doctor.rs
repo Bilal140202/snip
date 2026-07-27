@@ -166,8 +166,24 @@ pub(crate) fn run_at(root: &Path, auto_fix: bool) -> Result<()> {
         }
     }
 
+    // ── Project environment checks ───────────────────────────────────────
+    // Run after snippet validation so env issues appear in their own section.
+    let env_issues = run_env_checks(&file, root);
+    if !env_issues.is_empty() {
+        println!();
+        println!("{}", "Project environment:".bold());
+        for (severity, msg) in &env_issues {
+            let icon = match severity.as_str() {
+                "warning" => "⚠".yellow().to_string(),
+                "info" => "ℹ".cyan().to_string(),
+                _ => "•".dimmed().to_string(),
+            };
+            println!("  {} {}", icon, msg);
+        }
+    }
+
     println!();
-    if broken_count == 0 && issues.is_empty() {
+    if broken_count == 0 && issues.is_empty() && env_issues.is_empty() {
         println!("{} All {} snippet(s) are valid.", "✓".green(), valid_count);
     } else {
         let fix_hint = if auto_fix {
@@ -176,15 +192,188 @@ pub(crate) fn run_at(root: &Path, auto_fix: bool) -> Result<()> {
             format!(" Run {} to auto-fix.", "snip doctor --fix".cyan())
         };
         println!(
-            "{} {} valid, {} broken{}",
+            "{} {} valid, {} broken, {} env issue(s){}",
             "!".yellow(),
             valid_count,
             broken_count + issues.len(),
+            env_issues.len(),
             fix_hint
         );
     }
 
     Ok(())
+}
+
+/// Extract environment variable references ($VAR or ${VAR}) from a command string.
+fn extract_env_vars(cmd: &str) -> Vec<String> {
+    let mut vars = Vec::new();
+    let bytes = cmd.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'$' {
+            // ${VAR} form
+            if i + 1 < bytes.len() && bytes[i + 1] == b'{' {
+                if let Some(end) = cmd[i + 2..].find('}') {
+                    let name = &cmd[i + 2..i + 2 + end];
+                    if !name.is_empty() && !vars.contains(&name.to_string()) {
+                        vars.push(name.to_string());
+                    }
+                    i = i + 2 + end + 1;
+                    continue;
+                }
+            }
+            // $VAR form (alphanumeric + underscore)
+            let start = i + 1;
+            let mut end = start;
+            while end < bytes.len() && (bytes[end].is_ascii_alphanumeric() || bytes[end] == b'_') {
+                end += 1;
+            }
+            if end > start {
+                let name = &cmd[start..end];
+                if !vars.contains(&name.to_string()) {
+                    vars.push(name.to_string());
+                }
+                i = end;
+                continue;
+            }
+        }
+        i += 1;
+    }
+    vars
+}
+
+/// Run project-environment checks: env var presence, Docker daemon,
+/// `.env` file. Returns a list of (severity, message) issues.
+fn run_env_checks(file: &crate::core::snippet::SnipFile, root: &Path) -> Vec<(String, String)> {
+    let mut issues: Vec<(String, String)> = Vec::new();
+
+    // ── Check 1: env vars referenced in snippets but not set in the environment
+    let mut referenced_vars: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    let mut uses_docker = false;
+    for (_, snippet) in file.iter() {
+        for v in extract_env_vars(&snippet.cmd) {
+            referenced_vars.insert(v);
+        }
+        if snippet.cmd.contains("docker compose") || snippet.cmd.starts_with("docker ") {
+            uses_docker = true;
+        }
+    }
+
+    // Filter out common shell-interal vars and CI-provided vars that are
+    // always set; we don't want to flag those.
+    let always_set: &[&str] = &[
+        "PATH", "HOME", "USER", "SHELL", "LANG", "LC_ALL", "LC_CTYPE", "PWD", "OLDPWD", "TERM",
+        "SHLVL", "_", "TMPDIR",
+    ];
+
+    let mut missing_vars: Vec<String> = Vec::new();
+    for var in &referenced_vars {
+        if always_set.contains(&var.as_str()) {
+            continue;
+        }
+        if std::env::var_os(var).is_none() {
+            missing_vars.push(var.clone());
+        }
+    }
+
+    if !missing_vars.is_empty() {
+        issues.push((
+            "warning".to_string(),
+            format!(
+                "Snippets reference env var(s) not set in your shell: {}",
+                missing_vars
+                    .iter()
+                    .map(|v| format!("${}", v))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        ));
+
+        // Hint about .env file if missing vars exist but no .env present
+        let env_path = root.join(".env");
+        if !env_path.exists() {
+            issues.push((
+                "info".to_string(),
+                format!(
+                    "No {} file found — consider creating one with: {}",
+                    ".env".cyan(),
+                    missing_vars
+                        .iter()
+                        .map(|v| format!("{}=...", v))
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                ),
+            ));
+        }
+    }
+
+    // ── Check 2: Docker daemon running (only if any snippet uses docker)
+    if uses_docker {
+        let docker_running = check_docker_running();
+        if let Some(reason) = docker_running.error() {
+            issues.push((
+                "warning".to_string(),
+                format!("Snippets use Docker but {} — {}", "docker".cyan(), reason),
+            ));
+        }
+    }
+
+    issues
+}
+
+/// Tiny wrapper around `docker info` to detect if the daemon is running.
+struct DockerStatus {
+    #[allow(dead_code)]
+    ok: bool,
+    err: Option<String>,
+}
+
+impl DockerStatus {
+    fn error(&self) -> Option<&str> {
+        self.err.as_deref()
+    }
+}
+
+fn check_docker_running() -> DockerStatus {
+    // First check if `docker` binary exists
+    if which::which("docker").is_err() {
+        return DockerStatus {
+            ok: false,
+            err: Some("docker binary not installed".to_string()),
+        };
+    }
+    // Then check if the daemon responds
+    let out = std::process::Command::new("docker")
+        .args(["info", "--format", "{{.ServerVersion}}"])
+        .output();
+    match out {
+        Ok(output) => {
+            if output.status.success() {
+                DockerStatus {
+                    ok: true,
+                    err: None,
+                }
+            } else {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                let reason = if stderr.contains("Cannot connect to the Docker daemon") {
+                    "daemon not running (start with `dockerd` or open Docker Desktop)".to_string()
+                } else if stderr.contains("permission denied") {
+                    "permission denied (add your user to the `docker` group and re-login)"
+                        .to_string()
+                } else {
+                    format!("`docker info` failed: {}", stderr.trim())
+                };
+                DockerStatus {
+                    ok: false,
+                    err: Some(reason),
+                }
+            }
+        }
+        Err(e) => DockerStatus {
+            ok: false,
+            err: Some(format!("failed to spawn `docker info`: {}", e)),
+        },
+    }
 }
 
 #[cfg(test)]
