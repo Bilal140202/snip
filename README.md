@@ -476,3 +476,11 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 ## 📄 License
 
 [MIT](LICENSE) &copy; 2025-present
+
+---
+
+## Project status
+
+**Completed project** — verified in the portfolio audit of **7 November 2026** (README, codebase and project state reviewed).
+
+_Last verified: 7 November 2026_
